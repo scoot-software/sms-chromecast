@@ -26,41 +26,16 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 <html>
 <head>
   <title>Scoot Media Streamer</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <link rel="stylesheet" href="sms.css" />
   <script type="text/javascript" src="//www.gstatic.com/cast/sdk/libs/receiver/2.0.0/cast_receiver.js"></script>
-  <script type="text/javascript" src="sms.js"></script>
+  <!--<script type="text/javascript" src="sms.js"></script>-->
 </head>
-<body style="margin: 0">
-    <div id="player" class="player">
-        <div class="media">
-            <video></video>
-        </div>
-        <div class="logo"></div>
-        <div class="spinner"></div>
-        <div class="gradient"></div>
-        <div class="overlay">
-            <div class="media-info">
-                <div class="media-artwork"></div>
-                <div class="media-text">
-                    <div class="media-title"></div>
-                    <div class="media-subtitle"></div>
-                </div>
-            </div>
-            <div class="controls">
-                <span class="controls-play-pause"></span>
-                <span class="controls-cur-time"></span>
-                <span class="controls-total-time"></span>
-                <div class="controls-progress">
-                    <div class="controls-progress-inner progressBar"></div>
-                    <div class="controls-progress-thumb"></div>
-                </div>
-            </div>
-        </div>
-    </div>
-    <script>
-      var playerDiv = document.getElementById('player');
-      new smsplayer.CastPlayer(playerDiv).start();
-    </script>
+<body>
+  <video id='media'/>
+  <script>
+    window.mediaElement = document.getElementById('media');
+    window.mediaManager = new cast.receiver.MediaManager(window.mediaElement);
+    window.castReceiverManager = cast.receiver.CastReceiverManager.getInstance();
+    window.castReceiverManager.start();
+  </script>
 </body>
 </html>
