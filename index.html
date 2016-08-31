@@ -31,17 +31,61 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
     <body>
         <video id='media'/>
+        
         <script>
+            
+            /**
+             * Application config
+             **/
+            var appConfig = new cast.receiver.CastReceiverManager.Config();
+
+            /**
+             * Text that represents the application status.
+             **/
+            appConfig.statusText = 'Ready to play';
+
+            /**
+             * Maximum time in seconds before closing an idle
+             * sender connection. Setting this value enables a heartbeat message to keep
+             * the connection alive. Used to detect unresponsive senders faster than
+             * typical TCP timeouts. The minimum value is 5 seconds, there is no upper
+             * bound enforced but practically it's minutes before platform TCP timeouts
+             * come into play. Default value is 10 seconds.
+             **/
+            appConfig.maxInactivity = 6000;
+            
             window.mediaElement = document.getElementById('media');
             window.mediaManager = new cast.receiver.MediaManager(window.mediaElement);
             window.castReceiverManager = cast.receiver.CastReceiverManager.getInstance();
-            window.castReceiverManager.start();
             
             window.castReceiverManager.onSenderDisconnected = function(event) {
                 if(window.castReceiverManager.getSenders().length == 0 && event.reason == cast.receiver.system.DisconnectReason.REQUESTED_BY_SENDER) {
                     window.close();
                 }
             }
+            
+            /**
+             * Initialises the system manager. The application should call this method when
+             * it is ready to start receiving messages, typically after registering
+             * to listen for the events it is interested on.
+             */
+            window.castReceiverManager.start(appConfig);
+            
+            var mediaElement = document.getElementById('media');
+            var mediaManager = new cast.receiver.MediaManager(mediaElement);
+            
+            mediaManager['origOnLoad'] = mediaManager.onLoad;
+            mediaManager.onLoad = function (event) {
+                mediaManager[‘origOnLoad’](event);
+            }
+            
+            // Override play
+            mediaManager.onPlay = (function() {
+                var origOnPlay = mediaManager.onPlay;
+                return function(event) {
+                    origOnPlay(event);
+                }
+            }());
         </script>
     </body>
 </html>
