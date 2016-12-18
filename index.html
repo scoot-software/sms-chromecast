@@ -26,66 +26,77 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
     <head>
         <title>Scoot Media Streamer</title>
         <script type="text/javascript" src="//www.gstatic.com/cast/sdk/libs/receiver/2.0.0/cast_receiver.js"></script>
-        <!--<script type="text/javascript" src="sms.js"></script>-->
+	<script type="text/javascript" src="//www.gstatic.com/cast/sdk/libs/mediaplayer/1.0.0/media_player.js"></script>
     </head>
 
     <body>
         <video id='media'/>
         
-        <script>
-            
-            /**
-             * Application config
-             **/
-            var appConfig = new cast.receiver.CastReceiverManager.Config();
+        <script type="text/javascript">
+		// If you set ?Debug=true in the URL, such as a different App ID in the
+		// developer console, include debugging information.
+		if (window.location.href.indexOf('Debug=true') != -1) {
+  			cast.receiver.logger.setLevelValue(cast.receiver.LoggerLevel.DEBUG);
+  			cast.player.api.setLoggerLevel(cast.player.api.LoggerLevel.DEBUG);
+		}
 
-            /**
-             * Text that represents the application status.
-             **/
-            appConfig.statusText = 'Ready to play';
+		var mediaElement = document.getElementById('media');
 
-            /**
-             * Maximum time in seconds before closing an idle
-             * sender connection. Setting this value enables a heartbeat message to keep
-             * the connection alive. Used to detect unresponsive senders faster than
-             * typical TCP timeouts. The minimum value is 5 seconds, there is no upper
-             * bound enforced but practically it's minutes before platform TCP timeouts
-             * come into play. Default value is 10 seconds.
-             **/
-            appConfig.maxInactivity = 6000;
-            
-            window.mediaElement = document.getElementById('media');
-            window.mediaManager = new cast.receiver.MediaManager(window.mediaElement);
-            window.castReceiverManager = cast.receiver.CastReceiverManager.getInstance();
-            
-            window.castReceiverManager.onSenderDisconnected = function(event) {
-                if(window.castReceiverManager.getSenders().length == 0 && event.reason == cast.receiver.system.DisconnectReason.REQUESTED_BY_SENDER) {
-                    window.close();
-                }
-            }
-            
-            /**
-             * Initialises the system manager. The application should call this method when
-             * it is ready to start receiving messages, typically after registering
-             * to listen for the events it is interested on.
-             */
-            window.castReceiverManager.start(appConfig);
-            
-            var mediaElement = document.getElementById('media');
-            var mediaManager = new cast.receiver.MediaManager(mediaElement);
-            
-            mediaManager['origOnLoad'] = mediaManager.onLoad;
-            mediaManager.onLoad = function (event) {
-                mediaManager[‘origOnLoad’](event);
-            }
-            
-            // Override play
-            mediaManager.onPlay = (function() {
-                var origOnPlay = mediaManager.onPlay;
-                return function(event) {
-                    origOnPlay(event);
-                }
-            }());
+		// Create the media manager. This will handle all media messages by default.
+		window.mediaManager = new cast.receiver.MediaManager(mediaElement);
+
+		// Remember the default value for the Receiver onLoad if this isn't an adaptive stream
+		window.defaultOnLoad = mediaManager.onLoad;
+		mediaManager.onLoad = function (event) {
+			// The Media Player Library requires that you call player unload between
+			// different invocations.
+  			if (window.player !== null) {
+    				player.unload();    // Must unload before starting again.
+    				window.player = null;
+  			}
+
+			if (event.data['media'] && event.data['media']['contentId']) {
+    				console.log('Starting media application');
+    				var url = event.data['media']['contentId'];
+
+				// Create the Host - much of your interaction with the library uses the Host and methods you provide to it.
+	    			window.host = new cast.player.api.Host({'mediaElement':mediaElement, 'url':url});
+	    			
+				var ext = url.substring(url.lastIndexOf('.'), url.length);
+	    			var initStart = event.data['media']['currentTime'] || 0;
+	    			var autoplay = event.data['autoplay'] || true;
+	    			var protocol = null;
+	    			mediaElement.autoplay = autoplay;  // Make sure autoplay get's set
+	    
+				// HTTP Live Streaming
+				if (url.lastIndexOf('.m3u8') >= 0) {
+	      				protocol = cast.player.api.CreateHlsStreamingProtocol(host);
+	    			}
+
+				// Host error handler
+				host.onError = function(errorCode) {
+	      				console.log("Fatal Error - " + errorCode);
+	      				if (window.player) {
+						window.player.unload();
+						window.player = null;
+	      				}
+	    			};
+
+				// Adaptive Stream
+				if (protocol !== null) {
+	      				console.log("Starting Media Player Library");
+	      				window.player = new cast.player.api.Player(host);
+	      				window.player.load(protocol, initStart);
+	    			} else {
+	      				window.defaultOnLoad(event);    // Do the default onLoad procedure
+	    			}
+			}
+		}
+
+		window.player = null;
+		console.log('Application is ready, starting system');
+		window.castReceiverManager = cast.receiver.CastReceiverManager.getInstance();
+		castReceiverManager.start();
         </script>
     </body>
 </html>
