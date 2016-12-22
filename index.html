@@ -23,80 +23,107 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 -->
 <!DOCTYPE html>
 <html>
-    <head>
-        <title>Scoot Media Streamer</title>
-        <script type="text/javascript" src="//www.gstatic.com/cast/sdk/libs/receiver/2.0.0/cast_receiver.js"></script>
-	<script type="text/javascript" src="//www.gstatic.com/cast/sdk/libs/mediaplayer/1.0.0/media_player.js"></script>
-    </head>
+	<head>
+        	<title>Scoot Media Streamer</title>
+		<meta name="viewport" content="width=device-width, initial-scale=1.0">
+		<link rel="stylesheet" href="sms.css" />
+        	<script type="text/javascript" src="//www.gstatic.com/cast/sdk/libs/receiver/2.0.0/cast_receiver.js"></script>
+		<script type="text/javascript" src="//www.gstatic.com/cast/sdk/libs/mediaplayer/1.0.0/media_player.js"></script>
+    	</head>
 
-    <body>
-        <video id='media'/>
+    	<body style="margin: 0">
+		<div id="player" class="player">
+        		<video id='media'/>
+
+			<div class="logo"></div>
+        		<div class="spinner"></div>
+        		<div class="watermark"></div>
+        		<div class="gradient"></div>
+        		<div class="overlay">
+            			<div class="media-info">
+                			<div class="media-artwork"></div>
+                			<div class="media-text">
+                    				<div class="media-title"></div>
+                    				<div class="media-subtitle"></div>
+                			</div>
+            			</div>
+				<div class="controls">
+                			<span class="controls-play-pause"></span>
+                			<span class="controls-cur-time"></span>
+                			<span class="controls-total-time"></span>
+                			<div class="controls-progress">
+                    				<div class="controls-progress-inner progressBar"></div>
+                    				<div class="controls-progress-thumb"></div>
+					</div>
+				</div>
+			</div>
+		</div>
         
-        <script type="text/javascript">
-		// If you set ?Debug=true in the URL, such as a different App ID in the
-		// developer console, include debugging information.
-		if (window.location.href.indexOf('Debug=true') != -1) {
-  			cast.receiver.logger.setLevelValue(cast.receiver.LoggerLevel.DEBUG);
-  			cast.player.api.setLoggerLevel(cast.player.api.LoggerLevel.DEBUG);
-		}
-
-		var mediaElement = document.getElementById('media');
-
-		// Create the media manager. This will handle all media messages by default.
-		window.mediaManager = new cast.receiver.MediaManager(mediaElement);
-
-		// Remember the default value for the Receiver onLoad if this isn't an adaptive stream
-		window.defaultOnLoad = mediaManager.onLoad;
-		mediaManager.onLoad = function (event) {
-			// The Media Player Library requires that you call player unload between
-			// different invocations.
-  			if (window.player !== null) {
-    				player.unload();    // Must unload before starting again.
-    				window.player = null;
-  			}
-
-			if (event.data['media'] && event.data['media']['contentId']) {
-    				console.log('Starting media application');
-    				var url = event.data['media']['contentId'];
-
-				// Create the Host - much of your interaction with the library uses the Host and methods you provide to it.
-	    			window.host = new cast.player.api.Host({'mediaElement':mediaElement, 'url':url});
-	    			
-				var ext = url.substring(url.lastIndexOf('.'), url.length);
-	    			var initStart = event.data['media']['currentTime'] || 0;
-	    			var autoplay = event.data['autoplay'] || true;
-	    			var protocol = null;
-	    			mediaElement.autoplay = autoplay;  // Make sure autoplay get's set
-	    
-				// HTTP Live Streaming
-				if (url.lastIndexOf('.m3u8') >= 0) {
-	      				protocol = cast.player.api.CreateHlsStreamingProtocol(host);
-	    			}
-
-				// Host error handler
-				host.onError = function(errorCode) {
-	      				console.log("Fatal Error - " + errorCode);
-	      				if (window.player) {
-						window.player.unload();
-						window.player = null;
-	      				}
-	    			};
-
-				// Adaptive Stream
-				if (protocol !== null) {
-	      				console.log("Starting Media Player Library");
-	      				window.player = new cast.player.api.Player(host);
-	      				window.player.load(protocol, initStart);
-	    			} else {
-	      				window.defaultOnLoad(event);    // Do the default onLoad procedure
-	    			}
+		<script type="text/javascript">
+			// If you set ?Debug=true in the URL, such as a different App ID in the
+			// developer console, include debugging information.
+			if (window.location.href.indexOf('Debug=true') != -1) {
+	  			cast.receiver.logger.setLevelValue(cast.receiver.LoggerLevel.DEBUG);
+	  			cast.player.api.setLoggerLevel(cast.player.api.LoggerLevel.DEBUG);
 			}
-		}
 
-		window.player = null;
-		console.log('Application is ready, starting system');
-		window.castReceiverManager = cast.receiver.CastReceiverManager.getInstance();
-		castReceiverManager.start();
-        </script>
-    </body>
+			var mediaElement = document.getElementById('media');
+
+			// Create the media manager. This will handle all media messages by default.
+			window.mediaManager = new cast.receiver.MediaManager(mediaElement);
+
+			// Remember the default value for the Receiver onLoad if this isn't an adaptive stream
+			window.defaultOnLoad = mediaManager.onLoad;
+			mediaManager.onLoad = function (event) {
+				// The Media Player Library requires that you call player unload between
+				// different invocations.
+	  			if (window.player !== null) {
+	    				player.unload();    // Must unload before starting again.
+	    				window.player = null;
+	  			}
+
+				if (event.data['media'] && event.data['media']['contentId']) {
+	    				console.log('Starting media application');
+	    				var url = event.data['media']['contentId'];
+
+					// Create the Host - much of your interaction with the library uses the Host and methods you provide to it.
+		    			window.host = new cast.player.api.Host({'mediaElement':mediaElement, 'url':url});
+		    			
+					var ext = url.substring(url.lastIndexOf('.'), url.length);
+		    			var initStart = event.data['media']['currentTime'] || 0;
+		    			var autoplay = event.data['autoplay'] || true;
+		    			var protocol = null;
+		    			mediaElement.autoplay = autoplay;  // Make sure autoplay get's set
+		    
+					// HTTP Live Streaming
+					if (url.lastIndexOf('.m3u8') >= 0) {
+		      				protocol = cast.player.api.CreateHlsStreamingProtocol(host);
+		    			}
+
+					// Host error handler
+					host.onError = function(errorCode) {
+		      				console.log("Fatal Error - " + errorCode);
+		      				if (window.player) {
+							window.player.unload();
+							window.player = null;
+		      				}
+		    			};
+
+					// Adaptive Stream
+					if (protocol !== null) {
+		      				console.log("Starting Media Player Library");
+		      				window.player = new cast.player.api.Player(host);
+		      				window.player.load(protocol, initStart);
+		    			} else {
+		      				window.defaultOnLoad(event);    // Do the default onLoad procedure
+		    			}
+				}
+			}
+
+			window.player = null;
+			console.log('Application is ready, starting system');
+			window.castReceiverManager = cast.receiver.CastReceiverManager.getInstance();
+			castReceiverManager.start();
+		</script>
+    	</body>
 </html>
