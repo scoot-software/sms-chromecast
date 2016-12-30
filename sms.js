@@ -1753,7 +1753,13 @@ smsplayer.getType_ = function(media) {
   var contentId = media.contentId || '';
   var contentType = media.contentType || '';
   var contentUrlPath = smsplayer.getPath_(contentId);
-  if (contentType.indexOf('audio/') === 0) {
+  var mediaType = media.customData.mediaType || '';
+  
+  if(mediaType === 0) {
+    return smsplayer.Type.AUDIO;
+  } else if (mediaType === 1) {
+    return smsplayer.Type.VIDEO;
+  } else if (contentType.indexOf('audio/') === 0) {
     return smsplayer.Type.AUDIO;
   } else if (contentType.indexOf('video/') === 0) {
     return smsplayer.Type.VIDEO;
