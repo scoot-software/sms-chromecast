@@ -1,26 +1,3 @@
-/*
- * Author: Scott Ware <scoot.software@gmail.com>
- * Copyright (c) 2015 Scott Ware
- *
- * Permission is hereby granted, free of charge, to any person obtaining
- * a copy of this software and associated documentation files (the
- * "Software"), to deal in the Software without restriction, including
- * without limitation the rights to use, copy, modify, merge, publish,
- * distribute, sublicense, and/or sell copies of the Software, and to
- * permit persons to whom the Software is furnished to do so, subject to
- * the following conditions:
- *
- * The above copyright notice and this permission notice shall be
- * included in all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
- * EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
- * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
- * NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE
- * LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
- * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
- * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
- */
 'use strict';
 
 
@@ -32,15 +9,31 @@ var smsplayer = smsplayer || {};
 
 
 /**
- * SMS player constructor
+ * <p>
+ * Cast player constructor - This does the following:
+ * </p>
+ * <ol>
+ * <li>Bind a listener to visibilitychange</li>
+ * <li>Set the default state</li>
+ * <li>Bind event listeners for img & video tags<br />
+ *  error, stalled, waiting, playing, pause, ended, timeupdate, seeking, &
+ *  seeked</li>
+ * <li>Find and remember the various elements</li>
+ * <li>Create the MediaManager and bind to onLoad & onStop</li>
+ * </ol>
+ *
+ * @param {!Element} element the element to attach the player
+ * @struct
+ * @constructor
+ * @export
  */
 smsplayer.CastPlayer = function(element) {
 
   /**
    * The debug setting to control receiver, MPL and player logging.
+   * @private {boolean}
    */
   this.debug_ = smsplayer.getDebug_();
-
   if (this.debug_) {
     cast.player.api.setLoggerLevel(cast.player.api.LoggerLevel.DEBUG);
     cast.receiver.logger.setLevelValue(cast.receiver.LoggerLevel.DEBUG);
@@ -48,23 +41,27 @@ smsplayer.CastPlayer = function(element) {
 
   /**
    * The DOM element the player is attached.
+   * @private {!Element}
    */
   this.element_ = element;
 
   /**
    * The current type of the player.
+   * @private {smsplayer.Type}
    */
   this.type_;
 
-  this.setType_(smsplayer.Type.UNKNOWN);
+  this.setType_(smsplayer.Type.UNKNOWN, false);
 
   /**
    * The current state of the player.
+   * @private {smsplayer.State}
    */
   this.state_;
 
   /**
    * Timestamp when state transition happened last time.
+   * @private {number}
    */
   this.lastStateTransitionTime_ = 0;
 
@@ -72,91 +69,126 @@ smsplayer.CastPlayer = function(element) {
 
   /**
    * The id returned by setInterval for the screen burn timer
+   * @private {number|undefined}
    */
   this.burnInPreventionIntervalId_;
 
   /**
    * The id returned by setTimeout for the idle timer
+   * @private {number|undefined}
    */
   this.idleTimerId_;
 
   /**
    * The id of timer to handle seeking UI.
+   * @private {number|undefined}
    */
   this.seekingTimerId_;
 
   /**
    * The id of timer to defer setting state.
+   * @private {number|undefined}
    */
   this.setStateDelayTimerId_;
 
   /**
    * Current application state.
+   * @private {string|undefined}
    */
   this.currentApplicationState_;
 
   /**
    * The DOM element for the inner portion of the progress bar.
+   * @private {!Element}
    */
   this.progressBarInnerElement_ = this.getElementByClass_(
       '.controls-progress-inner');
 
   /**
    * The DOM element for the thumb portion of the progress bar.
+   * @private {!Element}
    */
   this.progressBarThumbElement_ = this.getElementByClass_(
       '.controls-progress-thumb');
 
   /**
    * The DOM element for the current time label.
+   * @private {!Element}
    */
   this.curTimeElement_ = this.getElementByClass_('.controls-cur-time');
 
   /**
    * The DOM element for the total time label.
+   * @private {!Element}
    */
   this.totalTimeElement_ = this.getElementByClass_('.controls-total-time');
 
   /**
+   * The DOM element for the preview time label.
+   * @private {!Element}
+   */
+  this.previewModeTimerElement_ = this.getElementByClass_('.preview-mode-timer-countdown');
+
+  /**
    * Handler for buffering-related events for MediaElement.
+   * @private {function()}
    */
   this.bufferingHandler_ = this.onBuffering_.bind(this);
 
   /**
    * Media player to play given manifest.
+   * @private {cast.player.api.Player}
    */
   this.player_ = null;
 
   /**
+   * Media player used to preload content.
+   * @private {cast.player.api.Player}
+   */
+  this.preloadPlayer_ = null;
+
+  /**
    * Text Tracks currently supported.
+   * @private {?smsplayer.TextTrackType}
    */
   this.textTrackType_ = null;
 
   /**
    * Whether player app should handle autoplay behavior.
+   * @private {boolean}
    */
   this.playerAutoPlay_ = false;
 
   /**
+   * Whether player app should display the preview mode UI.
+   * @private {boolean}
+   */
+  this.displayPreviewMode_ = false;
+
+  /**
    * Id of deferred play callback
+   * @private {?number}
    */
   this.deferredPlayCallbackId_ = null;
 
   /**
    * Whether the player is ready to receive messages after a LOAD request.
+   * @private {boolean}
    */
   this.playerReady_ = false;
 
   /**
    * Whether the player has received the metadata loaded event after a LOAD
    * request.
+   * @private {boolean}
    */
   this.metadataLoaded_ = false;
 
   /**
    * The media element.
+   * @private {HTMLMediaElement}
    */
-  this.mediaElement_ =
+  this.mediaElement_ = /** @type {HTMLMediaElement} */
       (this.element_.querySelector('video'));
   this.mediaElement_.addEventListener('error', this.onError_.bind(this), false);
   this.mediaElement_.addEventListener('playing', this.onPlaying_.bind(this),
@@ -174,6 +206,7 @@ smsplayer.CastPlayer = function(element) {
 
   /**
    * The cast receiver manager.
+   * @private {!cast.receiver.CastReceiverManager}
    */
   this.receiverManager_ = cast.receiver.CastReceiverManager.getInstance();
   this.receiverManager_.onReady = this.onReady_.bind(this);
@@ -187,11 +220,13 @@ smsplayer.CastPlayer = function(element) {
 
   /**
    * The remote media object.
+   * @private {cast.receiver.MediaManager}
    */
   this.mediaManager_ = new cast.receiver.MediaManager(this.mediaElement_);
 
   /**
    * The original load callback.
+   * @private {?function(cast.receiver.MediaManager.Event)}
    */
   this.onLoadOrig_ =
       this.mediaManager_.onLoad.bind(this.mediaManager_);
@@ -199,6 +234,7 @@ smsplayer.CastPlayer = function(element) {
 
   /**
    * The original editTracksInfo callback
+   * @private {?function(!cast.receiver.MediaManager.Event)}
    */
   this.onEditTracksInfoOrig_ =
       this.mediaManager_.onEditTracksInfo.bind(this.mediaManager_);
@@ -206,6 +242,7 @@ smsplayer.CastPlayer = function(element) {
 
   /**
    * The original metadataLoaded callback
+   * @private {?function(!cast.receiver.MediaManager.LoadInfo)}
    */
   this.onMetadataLoadedOrig_ =
       this.mediaManager_.onMetadataLoaded.bind(this.mediaManager_);
@@ -213,6 +250,7 @@ smsplayer.CastPlayer = function(element) {
 
   /**
    * The original stop callback.
+   * @private {?function(cast.receiver.MediaManager.Event)}
    */
   this.onStopOrig_ =
       this.mediaManager_.onStop.bind(this.mediaManager_);
@@ -220,6 +258,7 @@ smsplayer.CastPlayer = function(element) {
 
   /**
    * The original metadata error callback.
+   * @private {?function(!cast.receiver.MediaManager.LoadInfo)}
    */
   this.onLoadMetadataErrorOrig_ =
       this.mediaManager_.onLoadMetadataError.bind(this.mediaManager_);
@@ -227,6 +266,7 @@ smsplayer.CastPlayer = function(element) {
 
   /**
    * The original error callback
+   * @private {?function(!Object)}
    */
   this.onErrorOrig_ =
       this.mediaManager_.onError.bind(this.mediaManager_);
@@ -254,6 +294,8 @@ smsplayer.IDLE_TIMEOUT = {
 
 /**
  * Describes the type of media being played.
+ *
+ * @enum {string}
  */
 smsplayer.Type = {
   AUDIO: 'audio',
@@ -261,17 +303,47 @@ smsplayer.Type = {
   UNKNOWN: 'unknown'
 };
 
+
+/**
+ * Describes the type of captions being used.
+ *
+ * @enum {string}
+ */
+smsplayer.TextTrackType = {
+  SIDE_LOADED_TTML: 'ttml',
+  SIDE_LOADED_VTT: 'vtt',
+  SIDE_LOADED_UNSUPPORTED: 'unsupported',
+  EMBEDDED: 'embedded'
+};
+
+
+/**
+ * Describes the type of captions being used.
+ *
+ * @enum {string}
+ */
+smsplayer.CaptionsMimeType = {
+  TTML: 'application/ttml+xml',
+  VTT: 'text/vtt'
+};
+
+
 /**
  * Describes the type of track.
+ *
+ * @enum {string}
  */
 smsplayer.TrackType = {
   AUDIO: 'audio',
-  VIDEO: 'video'
+  VIDEO: 'video',
+  TEXT: 'text'
 };
 
 
 /**
  * Describes the state of the player.
+ *
+ * @enum {string}
  */
 smsplayer.State = {
   LAUNCHING: 'launching',
@@ -287,35 +359,49 @@ smsplayer.State = {
  * The amount of time (in ms) a screen should stay idle before burn in
  * prevention kicks in
  *
+ * @type {number}
  */
 smsplayer.BURN_IN_TIMEOUT = 30 * 1000;
 
 /**
  * The minimum duration (in ms) that media info is displayed.
+ *
+ * @const @private {number}
  */
 smsplayer.MEDIA_INFO_DURATION_ = 3 * 1000;
 
 
 /**
  * Transition animation duration (in sec).
+ *
+ * @const @private {number}
  */
 smsplayer.TRANSITION_DURATION_ = 1.5;
 
 
 /**
  * Const to enable debugging.
+ *
+ * @const @private {boolean}
  */
 smsplayer.ENABLE_DEBUG_ = true;
 
 
 /**
  * Const to disable debugging.
+ *
+ * #@const @private {boolean}
  */
 smsplayer.DISABLE_DEBUG_ = false;
 
 
 /**
  * Returns the element with the given class name
+ *
+ * @param {string} className The class name of the element to return.
+ * @return {!Element}
+ * @throws {Error} If given class cannot be found.
+ * @private
  */
 smsplayer.CastPlayer.prototype.getElementByClass_ = function(className) {
   var element = this.element_.querySelector(className);
@@ -329,6 +415,9 @@ smsplayer.CastPlayer.prototype.getElementByClass_ = function(className) {
 
 /**
  * Returns this player's media element.
+ *
+ * @return {HTMLMediaElement} The media element.
+ * @export
  */
 smsplayer.CastPlayer.prototype.getMediaElement = function() {
   return this.mediaElement_;
@@ -337,6 +426,9 @@ smsplayer.CastPlayer.prototype.getMediaElement = function() {
 
 /**
  * Returns this player's media manager.
+ *
+ * @return {cast.receiver.MediaManager} The media manager.
+ * @export
  */
 smsplayer.CastPlayer.prototype.getMediaManager = function() {
   return this.mediaManager_;
@@ -345,6 +437,9 @@ smsplayer.CastPlayer.prototype.getMediaManager = function() {
 
 /**
  * Returns this player's MPL player.
+ *
+ * @return {cast.player.api.Player} The current MPL player.
+ * @export
  */
 smsplayer.CastPlayer.prototype.getPlayer = function() {
   return this.player_;
@@ -353,13 +448,120 @@ smsplayer.CastPlayer.prototype.getPlayer = function() {
 
 /**
  * Starts the player.
+ *
+ * @export
  */
 smsplayer.CastPlayer.prototype.start = function() {
   this.receiverManager_.start();
 };
 
+
+/**
+ * Preloads the given data.
+ *
+ * @param {!cast.receiver.media.MediaInformation} mediaInformation The
+ *     asset media information.
+ * @return {boolean} Whether the media can be preloaded.
+ * @export
+ */
+smsplayer.CastPlayer.prototype.preload = function(mediaInformation) {
+  this.log_('preload');
+  // For video formats that cannot be preloaded (mp4...), display preview UI.
+  if (smsplayer.canDisplayPreview_(mediaInformation || {})) {
+    this.showPreviewMode_(mediaInformation);
+    return true;
+  }
+  if (!smsplayer.supportsPreload_(mediaInformation || {})) {
+    this.log_('preload: no supportsPreload_');
+    return false;
+  }
+  if (this.preloadPlayer_) {
+    this.preloadPlayer_.unload();
+    this.preloadPlayer_ = null;
+  }
+  // Only videos are supported for now
+  var couldPreload = this.preloadVideo_(mediaInformation);
+  if (couldPreload) {
+    this.showPreviewMode_(mediaInformation);
+  }
+  this.log_('preload: couldPreload=' + couldPreload);
+  return couldPreload;
+};
+
+
+/**
+ * Display preview mode metadata.
+ *
+ * @param {boolean} show whether player is showing preview mode metadata
+ * @export
+ */
+smsplayer.CastPlayer.prototype.showPreviewModeMetadata = function(show) {
+  this.element_.setAttribute('preview-mode', show.toString());
+};
+
+/**
+ * Show the preview mode UI.
+ *
+ * @param {!cast.receiver.media.MediaInformation} mediaInformation The
+ *     asset media information.
+ * @private
+ */
+smsplayer.CastPlayer.prototype.showPreviewMode_ = function(mediaInformation) {
+  this.displayPreviewMode_ = true;
+  this.loadPreviewModeMetadata_(mediaInformation);
+  this.showPreviewModeMetadata(true);
+};
+
+
+/**
+ * Hide the preview mode UI.
+ *
+ * @private
+ */
+smsplayer.CastPlayer.prototype.hidePreviewMode_ = function() {
+  this.showPreviewModeMetadata(false);
+  this.displayPreviewMode_ = false;
+};
+
+
+/**
+ * Preloads some video content.
+ *
+ * @param {!cast.receiver.media.MediaInformation} mediaInformation The
+ *     asset media information.
+ * @return {boolean} Whether the video can be preloaded.
+ * @private
+ */
+smsplayer.CastPlayer.prototype.preloadVideo_ = function(mediaInformation) {
+  this.log_('preloadVideo_');
+  var self = this;
+  var url = mediaInformation.contentId;
+  var protocolFunc = smsplayer.getProtocolFunction_(mediaInformation);
+  if (!protocolFunc) {
+    this.log_('No protocol found for preload');
+    return false;
+  }
+  var host = new cast.player.api.Host({
+    'url': url,
+    'mediaElement': self.mediaElement_
+  });
+  host.onError = function() {
+    self.preloadPlayer_.unload();
+    self.preloadPlayer_ = null;
+    self.showPreviewModeMetadata(false);
+    self.displayPreviewMode_ = false;
+    self.log_('Error during preload');
+  };
+  self.preloadPlayer_ = new cast.player.api.Player(host);
+  self.preloadPlayer_.preload(protocolFunc(host));
+  return true;
+};
+
 /**
  * Loads the given data.
+ *
+ * @param {!cast.receiver.MediaManager.LoadInfo} info The load request info.
+ * @export
  */
 smsplayer.CastPlayer.prototype.load = function(info) {
   this.log_('onLoad_');
@@ -368,6 +570,7 @@ smsplayer.CastPlayer.prototype.load = function(info) {
   var media = info.message.media || {};
   var contentType = media.contentType;
   var playerType = smsplayer.getType_(media);
+  var isLiveStream = media.streamType === cast.receiver.media.StreamType.LIVE;
   if (!media.contentId) {
     this.log_('Load failed: no content');
     self.onLoadMetadataError_(info);
@@ -377,33 +580,47 @@ smsplayer.CastPlayer.prototype.load = function(info) {
   } else {
     this.log_('Loading: ' + playerType);
     self.resetMediaElement_();
-    self.setType_(playerType);
+    self.setType_(playerType, isLiveStream);
+    var preloaded = false;
     switch (playerType) {
       case smsplayer.Type.AUDIO:
         self.loadAudio_(info);
         break;
       case smsplayer.Type.VIDEO:
-        self.loadVideo_(info);
+        preloaded = self.loadVideo_(info);
         break;
     }
     self.playerReady_ = false;
     self.metadataLoaded_ = false;
     self.loadMetadata_(media);
+    self.showPreviewModeMetadata(false);
+    self.displayPreviewMode_ = false;
     smsplayer.preload_(media, function() {
-      smsplayer.transition_(self.element_, smsplayer.TRANSITION_DURATION_, function() {
-        self.setState_(smsplayer.State.LOADING, false);
-        // Only send load completed after we reach this point so the media
-        // manager state is still loading and the sender can't send any PLAY
-        // messages
+      self.log_('preloaded=' + preloaded);
+      if (preloaded) {
+        // Data is ready to play so transiton directly to playing.
+        self.setState_(smsplayer.State.PLAYING, false);
         self.playerReady_ = true;
         self.maybeSendLoadCompleted_(info);
-        if (self.playerAutoPlay_) {
-          // Make sure media info is displayed long enough before playback
-          // starts.
-          self.deferPlay_(smsplayer.MEDIA_INFO_DURATION_);
-          self.playerAutoPlay_ = false;
-        }
-      });
+        // Don't display metadata again, since autoplay already did that.
+        self.deferPlay_(0);
+        self.playerAutoPlay_ = false;
+      } else {
+        smsplayer.transition_(self.element_, smsplayer.TRANSITION_DURATION_, function() {
+          self.setState_(smsplayer.State.LOADING, false);
+          // Only send load completed after we reach this point so the media
+          // manager state is still loading and the sender can't send any PLAY
+          // messages
+          self.playerReady_ = true;
+          self.maybeSendLoadCompleted_(info);
+          if (self.playerAutoPlay_) {
+            // Make sure media info is displayed long enough before playback
+            // starts.
+            self.deferPlay_(smsplayer.MEDIA_INFO_DURATION_);
+            self.playerAutoPlay_ = false;
+          }
+        });
+      }
     });
   }
 };
@@ -412,6 +629,8 @@ smsplayer.CastPlayer.prototype.load = function(info) {
  * Sends the load complete message to the sender if the two necessary conditions
  * are met, the player is ready for messages and the loaded metadata event has
  * been received.
+ * @param {!cast.receiver.MediaManager.LoadInfo} info The load request info.
+ * @private
  */
 smsplayer.CastPlayer.prototype.maybeSendLoadCompleted_ = function(info) {
   if (!this.playerReady_) {
@@ -426,6 +645,8 @@ smsplayer.CastPlayer.prototype.maybeSendLoadCompleted_ = function(info) {
 
 /**
  * Resets the media element.
+ *
+ * @private
  */
 smsplayer.CastPlayer.prototype.resetMediaElement_ = function() {
   this.log_('resetMediaElement_');
@@ -439,6 +660,9 @@ smsplayer.CastPlayer.prototype.resetMediaElement_ = function() {
 
 /**
  * Loads the metadata for the given media.
+ *
+ * @param {!cast.receiver.media.MediaInformation} media The media.
+ * @private
  */
 smsplayer.CastPlayer.prototype.loadMetadata_ = function(media) {
   this.log_('loadMetadata_');
@@ -458,10 +682,39 @@ smsplayer.CastPlayer.prototype.loadMetadata_ = function(media) {
   }
 };
 
+
+/**
+ * Loads the metadata for the given preview mode media.
+ *
+ * @param {!cast.receiver.media.MediaInformation} media The media.
+ * @private
+ */
+smsplayer.CastPlayer.prototype.loadPreviewModeMetadata_ = function(media) {
+  this.log_('loadPreviewModeMetadata_');
+  if (!smsplayer.isCastForAudioDevice_()) {
+    var metadata = media.metadata || {};
+    var titleElement = this.element_.querySelector('.preview-mode-title');
+    smsplayer.setInnerText_(titleElement, metadata.title);
+
+    var subtitleElement = this.element_.querySelector('.preview-mode-subtitle');
+    smsplayer.setInnerText_(subtitleElement, metadata.subtitle);
+
+    var artwork = smsplayer.getMediaImageUrl_(media);
+    if (artwork) {
+      var artworkElement = this.element_.querySelector('.preview-mode-artwork');
+      smsplayer.setBackgroundImage_(artworkElement, artwork);
+    }
+  }
+};
+
+
 /**
  * Lets player handle autoplay, instead of depending on underlying
  * MediaElement to handle it. By this way, we can make sure that media playback
  * starts after loading screen is displayed.
+ *
+ * @param {!cast.receiver.MediaManager.LoadInfo} info The load request info.
+ * @private
  */
 smsplayer.CastPlayer.prototype.letPlayerHandleAutoPlay_ = function(info) {
   this.log_('letPlayerHandleAutoPlay_: ' + info.message.autoplay);
@@ -474,6 +727,9 @@ smsplayer.CastPlayer.prototype.letPlayerHandleAutoPlay_ = function(info) {
 
 /**
  * Loads some audio content.
+ *
+ * @param {!cast.receiver.MediaManager.LoadInfo} info The load request info.
+ * @private
  */
 smsplayer.CastPlayer.prototype.loadAudio_ = function(info) {
   this.log_('loadAudio_');
@@ -484,23 +740,289 @@ smsplayer.CastPlayer.prototype.loadAudio_ = function(info) {
 
 /**
  * Loads some video content.
+ *
+ * @param {!cast.receiver.MediaManager.LoadInfo} info The load request info.
+ * @return {boolean} Whether the media was preloaded
+ * @private
  */
 smsplayer.CastPlayer.prototype.loadVideo_ = function(info) {
   this.log_('loadVideo_');
   var self = this;
+  var protocolFunc = null;
   var url = info.message.media.contentId;
+  var protocolFunc = smsplayer.getProtocolFunction_(info.message.media);
+  var wasPreloaded = false;
 
   this.letPlayerHandleAutoPlay_(info);
-  this.log_('loadVideo_: using MediaElement');
-  this.mediaElement_.addEventListener('stalled', this.bufferingHandler_,
+  if (!protocolFunc) {
+    this.log_('loadVideo_: using MediaElement');
+    this.mediaElement_.addEventListener('stalled', this.bufferingHandler_,
         false);
-  this.mediaElement_.addEventListener('waiting', this.bufferingHandler_,
+    this.mediaElement_.addEventListener('waiting', this.bufferingHandler_,
         false);
-  this.loadDefault_(info);
+  } else {
+    this.log_('loadVideo_: using Media Player Library');
+    // When MPL is used, buffering status should be detected by
+    // getState()['underflow]'
+    this.mediaElement_.removeEventListener('stalled', this.bufferingHandler_);
+    this.mediaElement_.removeEventListener('waiting', this.bufferingHandler_);
+
+    // If we have not preloaded or the content preloaded does not match the
+    // content that needs to be loaded, perform a full load
+    var loadErrorCallback = function() {
+      // unload player and trigger error event on media element
+      if (self.player_) {
+        self.resetMediaElement_();
+        self.mediaElement_.dispatchEvent(new Event('error'));
+      }
+    };
+    if (!this.preloadPlayer_ || (this.preloadPlayer_.getHost &&
+        this.preloadPlayer_.getHost().url != url)) {
+      if (this.preloadPlayer_) {
+        this.preloadPlayer_.unload();
+        this.preloadPlayer_ = null;
+      }
+      this.log_('Regular video load');
+      var host = new cast.player.api.Host({
+        'url': url,
+        'mediaElement': this.mediaElement_
+      });
+      host.onError = loadErrorCallback;
+      this.player_ = new cast.player.api.Player(host);
+      this.player_.load(protocolFunc(host));
+    } else {
+      this.log_('Preloaded video load');
+      this.player_ = this.preloadPlayer_;
+      this.preloadPlayer_ = null;
+      // Replace the "preload" error callback with the "load" error callback
+      this.player_.getHost().onError = loadErrorCallback;
+      this.player_.load();
+      wasPreloaded = true;
+    }
+  }
+  this.loadMediaManagerInfo_(info, !!protocolFunc);
+  return wasPreloaded;
 };
+
+
+/**
+ * Loads media and tracks info into media manager.
+ *
+ * @param {!cast.receiver.MediaManager.LoadInfo} info The load request info.
+ * @param {boolean} loadOnlyTracksMetadata Only load the tracks metadata (if
+ *     it is in the info provided).
+ * @private
+ */
+smsplayer.CastPlayer.prototype.loadMediaManagerInfo_ =
+    function(info, loadOnlyTracksMetadata) {
+
+  if (loadOnlyTracksMetadata) {
+    // In the case of media that uses MPL we do not
+    // use the media manager default onLoad API but we still need to load
+    // the tracks metadata information into media manager (so tracks can be
+    // managed and properly reported in the status messages) if they are
+    // provided in the info object (side loaded).
+    this.maybeLoadSideLoadedTracksMetadata_(info);
+  } else {
+    // Media supported by mediamanager, use the media manager default onLoad API
+    // to load the media, tracks metadata and, if the tracks are vtt the media
+    // manager will process the cues too.
+    this.loadDefault_(info);
+  }
+};
+
+
+/**
+ * Sets the captions type based on the text tracks.
+ *
+ * @param {!cast.receiver.MediaManager.LoadInfo} info The load request info.
+ * @private
+ */
+smsplayer.CastPlayer.prototype.readSideLoadedTextTrackType_ =
+    function(info) {
+  if (!info.message || !info.message.media || !info.message.media.tracks) {
+    return;
+  }
+  for (var i = 0; i < info.message.media.tracks.length; i++) {
+    var oldTextTrackType = this.textTrackType_;
+    if (info.message.media.tracks[i].type !=
+        cast.receiver.media.TrackType.TEXT) {
+      continue;
+    }
+    if (this.isTtmlTrack_(info.message.media.tracks[i])) {
+      this.textTrackType_ =
+          smsplayer.TextTrackType.SIDE_LOADED_TTML;
+    } else if (this.isVttTrack_(info.message.media.tracks[i])) {
+      this.textTrackType_ =
+          smsplayer.TextTrackType.SIDE_LOADED_VTT;
+    } else {
+      this.log_('Unsupported side loaded text track types');
+      this.textTrackType_ =
+          smsplayer.TextTrackType.SIDE_LOADED_UNSUPPORTED;
+      break;
+    }
+    // We do not support text tracks with different caption types for a single
+    // piece of content
+    if (oldTextTrackType && oldTextTrackType != this.textTrackType_) {
+      this.log_('Load has inconsistent text track types');
+      this.textTrackType_ =
+          smsplayer.TextTrackType.SIDE_LOADED_UNSUPPORTED;
+      break;
+    }
+  }
+};
+
+
+/**
+ * If there is tracks information in the LoadInfo, it loads the side loaded
+ * tracks information in the media manager without loading media.
+ *
+ * @param {!cast.receiver.MediaManager.LoadInfo} info The load request info.
+ * @private
+ */
+smsplayer.CastPlayer.prototype.maybeLoadSideLoadedTracksMetadata_ =
+    function(info) {
+  // If there are no tracks we will not load the tracks information here as
+  // we are likely in a embedded captions scenario and the information will
+  // be loaded in the onMetadataLoaded_ callback
+  if (!info.message || !info.message.media || !info.message.media.tracks ||
+      info.message.media.tracks.length == 0) {
+    return;
+  }
+  var tracksInfo = /** @type {cast.receiver.media.TracksInfo} **/ ({
+    tracks: info.message.media.tracks,
+    activeTrackIds: info.message.activeTrackIds,
+    textTrackStyle: info.message.media.textTrackStyle
+  });
+  this.mediaManager_.loadTracksInfo(tracksInfo);
+};
+
+
+/**
+ * Loads embedded tracks information without loading media.
+ * If there is embedded tracks information, it loads the tracks information
+ * in the media manager without loading media.
+ *
+ * @param {!cast.receiver.MediaManager.LoadInfo} info The load request info.
+ * @private
+ */
+smsplayer.CastPlayer.prototype.maybeLoadEmbeddedTracksMetadata_ =
+    function(info) {
+  if (!info.message || !info.message.media) {
+    return;
+  }
+  var tracksInfo = this.readInBandTracksInfo_();
+  if (tracksInfo) {
+    this.textTrackType_ = smsplayer.TextTrackType.EMBEDDED;
+    tracksInfo.textTrackStyle = info.message.media.textTrackStyle;
+    this.mediaManager_.loadTracksInfo(tracksInfo);
+  }
+};
+
+
+/**
+ * Processes ttml tracks and enables the active ones.
+ *
+ * @param {!Array.<number>} activeTrackIds The active tracks.
+ * @param {!Array.<cast.receiver.media.Track>} tracks The track definitions.
+ * @private
+ */
+smsplayer.CastPlayer.prototype.processTtmlCues_ =
+    function(activeTrackIds, tracks) {
+  if (activeTrackIds.length == 0) {
+    return;
+  }
+  // If there is an active text track, that is using ttml, apply it
+  for (var i = 0; i < tracks.length; i++) {
+    var contains = false;
+    for (var j = 0; j < activeTrackIds.length; j++) {
+      if (activeTrackIds[j] == tracks[i].trackId) {
+        contains = true;
+        break;
+      }
+    }
+    if (!contains ||
+        !this.isTtmlTrack_(tracks[i])) {
+      continue;
+    }
+    if (!this.player_) {
+      // We do not have a player, it means we need to create it to support
+      // loading ttml captions
+      var host = new cast.player.api.Host({
+        'url': '',
+        'mediaElement': this.mediaElement_
+      });
+      this.protocol_ = null;
+      this.player_ = new cast.player.api.Player(host);
+    }
+    this.player_.enableCaptions(
+        true, cast.player.api.CaptionsType.TTML, tracks[i].trackContentId);
+  }
+};
+
+
+/**
+ * Checks if a track is TTML.
+ *
+ * @param {cast.receiver.media.Track} track The track.
+ * @return {boolean} Whether the track is in TTML format.
+ * @private
+ */
+smsplayer.CastPlayer.prototype.isTtmlTrack_ = function(track) {
+  return this.isKnownTextTrack_(track,
+      smsplayer.TextTrackType.SIDE_LOADED_TTML,
+      smsplayer.CaptionsMimeType.TTML);
+};
+
+
+/**
+ * Checks if a track is VTT.
+ *
+ * @param {cast.receiver.media.Track} track The track.
+ * @return {boolean} Whether the track is in VTT format.
+ * @private
+ */
+smsplayer.CastPlayer.prototype.isVttTrack_ = function(track) {
+  return this.isKnownTextTrack_(track,
+      smsplayer.TextTrackType.SIDE_LOADED_VTT,
+      smsplayer.CaptionsMimeType.VTT);
+};
+
+
+/**
+ * Checks if a track is of a known type by verifying the extension or mimeType.
+ *
+ * @param {cast.receiver.media.Track} track The track.
+ * @param {!smsplayer.TextTrackType} textTrackType The text track
+ *     type expected.
+ * @param {!string} mimeType The mimeType expected.
+ * @return {boolean} Whether the track has the specified format.
+ * @private
+ */
+smsplayer.CastPlayer.prototype.isKnownTextTrack_ =
+    function(track, textTrackType, mimeType) {
+  if (!track) {
+    return false;
+  }
+  // The smsplayer.TextTrackType values match the
+  // file extensions required
+  var fileExtension = textTrackType;
+  var trackContentId = track.trackContentId;
+  var trackContentType = track.trackContentType;
+  if ((trackContentId &&
+          smsplayer.getExtension_(trackContentId) === fileExtension) ||
+      (trackContentType && trackContentType.indexOf(mimeType) === 0)) {
+    return true;
+  }
+  return false;
+};
+
 
 /**
  * Processes embedded tracks, if they exist.
+ *
+ * @param {!Array.<number>} activeTrackIds The active tracks.
+ * @private
  */
 smsplayer.CastPlayer.prototype.processInBandTracks_ =
     function(activeTrackIds) {
@@ -527,6 +1049,9 @@ smsplayer.CastPlayer.prototype.processInBandTracks_ =
 
 /**
  * Reads in-band tracks info, if they exist.
+ *
+ * @return {cast.receiver.media.TracksInfo} The tracks info.
+ * @private
  */
 smsplayer.CastPlayer.prototype.readInBandTracksInfo_ = function() {
   var protocol = this.player_ ? this.player_.getStreamingProtocol() : null;
@@ -544,7 +1069,11 @@ smsplayer.CastPlayer.prototype.readInBandTracksInfo_ = function() {
     var streamInfo = protocol.getStreamInfo(i);
     var mimeType = streamInfo.mimeType;
     var track;
-    if (mimeType.indexOf(smsplayer.TrackType.VIDEO) === 0) {
+    if (mimeType.indexOf(smsplayer.TrackType.TEXT) === 0 ||
+        mimeType === smsplayer.CaptionsMimeType.TTML) {
+      track = new cast.receiver.media.Track(
+          trackId, cast.receiver.media.TrackType.TEXT);
+    } else if (mimeType.indexOf(smsplayer.TrackType.VIDEO) === 0) {
       track = new cast.receiver.media.Track(
           trackId, cast.receiver.media.TrackType.VIDEO);
     } else if (mimeType.indexOf(smsplayer.TrackType.AUDIO) === 0) {
@@ -561,7 +1090,7 @@ smsplayer.CastPlayer.prototype.readInBandTracksInfo_ = function() {
   if (tracks.length === 0) {
     return null;
   }
-  var tracksInfo = ({
+  var tracksInfo = /** @type {cast.receiver.media.TracksInfo} **/ ({
     tracks: tracks,
     activeTrackIds: activeTrackIds
   });
@@ -571,17 +1100,23 @@ smsplayer.CastPlayer.prototype.readInBandTracksInfo_ = function() {
 
 /**
  * Loads some media by delegating to default media manager.
+ *
+ * @param {!cast.receiver.MediaManager.LoadInfo} info The load request info.
+ * @private
  */
 smsplayer.CastPlayer.prototype.loadDefault_ = function(info) {
   this.onLoadOrig_(new cast.receiver.MediaManager.Event(
       cast.receiver.MediaManager.EventType.LOAD,
-      (info.message),
+      /** @type {!cast.receiver.MediaManager.RequestData} */ (info.message),
       info.senderId));
 };
 
 
 /**
  * Sets the amount of time before the player is considered idle.
+ *
+ * @param {number} t the time in milliseconds before the player goes idle
+ * @private
  */
 smsplayer.CastPlayer.prototype.setIdleTimeout_ = function(t) {
   this.log_('setIdleTimeout_: ' + t);
@@ -597,12 +1132,18 @@ smsplayer.CastPlayer.prototype.setIdleTimeout_ = function(t) {
 
 /**
  * Sets the type of player.
+ *
+ * @param {smsplayer.Type} type The type of player.
+ * @param {boolean} isLiveStream whether player is showing live content
+ * @private
  */
-smsplayer.CastPlayer.prototype.setType_ = function(type) {
+smsplayer.CastPlayer.prototype.setType_ = function(type, isLiveStream) {
   this.log_('setType_: ' + type);
   this.type_ = type;
   this.element_.setAttribute('type', type);
+  this.element_.setAttribute('live', isLiveStream.toString());
   var overlay = this.getElementByClass_('.overlay');
+  var watermark = this.getElementByClass_('.watermark');
   clearInterval(this.burnInPreventionIntervalId_);
   if (type != smsplayer.Type.AUDIO) {
     overlay.removeAttribute('style');
@@ -619,6 +1160,11 @@ smsplayer.CastPlayer.prototype.setType_ = function(type) {
 
 /**
  * Sets the state of the player.
+ *
+ * @param {smsplayer.State} state the new state of the player
+ * @param {boolean=} opt_crossfade true if should cross fade between states
+ * @param {number=} opt_delay the amount of time (in ms) to wait
+ * @private
  */
 smsplayer.CastPlayer.prototype.setState_ = function(
     state, opt_crossfade, opt_delay) {
@@ -657,6 +1203,8 @@ smsplayer.CastPlayer.prototype.setState_ = function(
 
 /**
  * Updates the application state if it has changed.
+ *
+ * @private
  */
 smsplayer.CastPlayer.prototype.updateApplicationState_ = function() {
   this.log_('updateApplicationState_');
@@ -675,6 +1223,8 @@ smsplayer.CastPlayer.prototype.updateApplicationState_ = function() {
 /**
  * Called when the player is ready. We initialize the UI for the launching
  * and idle screens.
+ *
+ * @private
  */
 smsplayer.CastPlayer.prototype.onReady_ = function() {
   this.log_('onReady');
@@ -684,6 +1234,9 @@ smsplayer.CastPlayer.prototype.onReady_ = function() {
 
 /**
  * Called when a sender disconnects from the app.
+ *
+ * @param {cast.receiver.CastReceiverManager.SenderDisconnectedEvent} event
+ * @private
  */
 smsplayer.CastPlayer.prototype.onSenderDisconnected_ = function(event) {
   this.log_('onSenderDisconnected');
@@ -700,6 +1253,10 @@ smsplayer.CastPlayer.prototype.onSenderDisconnected_ = function(event) {
 /**
  * Called when media has an error. Transitions to IDLE state and
  * calls to the original media manager implementation.
+ *
+ * @see cast.receiver.MediaManager#onError
+ * @param {!Object} error
+ * @private
  */
 smsplayer.CastPlayer.prototype.onError_ = function(error) {
   this.log_('onError');
@@ -715,6 +1272,8 @@ smsplayer.CastPlayer.prototype.onError_ = function(error) {
 /**
  * Called when media is buffering. If we were previously playing,
  * transition to the BUFFERING state.
+ *
+ * @private
  */
 smsplayer.CastPlayer.prototype.onBuffering_ = function() {
   this.log_('onBuffering[readyState=' + this.mediaElement_.readyState + ']');
@@ -728,6 +1287,8 @@ smsplayer.CastPlayer.prototype.onBuffering_ = function() {
 /**
  * Called when media has started playing. We transition to the
  * PLAYING state.
+ *
+ * @private
  */
 smsplayer.CastPlayer.prototype.onPlaying_ = function() {
   this.log_('onPlaying');
@@ -743,6 +1304,8 @@ smsplayer.CastPlayer.prototype.onPlaying_ = function() {
  * Called when media has been paused. If this is an auto-pause as a result of
  * buffer underflow, we transition to BUFFERING state; otherwise, if the media
  * isn't done, we transition to the PAUSED state.
+ *
+ * @private
  */
 smsplayer.CastPlayer.prototype.onPause_ = function() {
   this.log_('onPause');
@@ -763,6 +1326,12 @@ smsplayer.CastPlayer.prototype.onPause_ = function() {
 
 /**
  * Changes player state reported to sender, if necessary.
+ * @param {!cast.receiver.media.MediaStatus} mediaStatus Media status that is
+ *     supposed to go to sender.
+ * @return {cast.receiver.media.MediaStatus} MediaStatus that will be sent to
+ *     sender.
+ *
+ * @private
  */
 smsplayer.CastPlayer.prototype.customizedStatusCallback_ = function(
     mediaStatus) {
@@ -781,6 +1350,9 @@ smsplayer.CastPlayer.prototype.customizedStatusCallback_ = function(
 /**
  * Called when we receive a STOP message. We stop the media and transition
  * to the IDLE state.
+ *
+ * @param {cast.receiver.MediaManager.Event} event The stop event.
+ * @private
  */
 smsplayer.CastPlayer.prototype.onStop_ = function(event) {
   this.log_('onStop');
@@ -796,25 +1368,33 @@ smsplayer.CastPlayer.prototype.onStop_ = function(event) {
 
 /**
  * Called when media has ended. We transition to the IDLE state.
+ *
+ * @private
  */
 smsplayer.CastPlayer.prototype.onEnded_ = function() {
   this.log_('onEnded');
   this.setState_(smsplayer.State.IDLE, true);
+  this.hidePreviewMode_();
 };
 
 
 /**
  * Called when media has been aborted. We transition to the IDLE state.
+ *
+ * @private
  */
 smsplayer.CastPlayer.prototype.onAbort_ = function() {
   this.log_('onAbort');
   this.setState_(smsplayer.State.IDLE, true);
+  this.hidePreviewMode_();
 };
 
 
 /**
  * Called periodically during playback, to notify changes in playback position.
  * We transition to PLAYING state, if we were in BUFFERING or LOADING state.
+ *
+ * @private
  */
 smsplayer.CastPlayer.prototype.onProgress_ = function() {
   // if we were previously buffering, update state to playing
@@ -828,6 +1408,8 @@ smsplayer.CastPlayer.prototype.onProgress_ = function() {
 
 /**
  * Updates the current time and progress bar elements.
+ *
+ * @private
  */
 smsplayer.CastPlayer.prototype.updateProgress_ = function() {
   // Update the time and the progress bar
@@ -840,6 +1422,10 @@ smsplayer.CastPlayer.prototype.updateProgress_ = function() {
       this.totalTimeElement_.innerText = smsplayer.formatDuration_(totalTime);
       this.progressBarInnerElement_.style.width = pct + '%';
       this.progressBarThumbElement_.style.left = pct + '%';
+      // Handle preview mode
+      if (this.displayPreviewMode_) {
+        this.previewModeTimerElement_.innerText = "" + Math.round(totalTime-curTime);
+      }
     }
   }
 };
@@ -847,6 +1433,8 @@ smsplayer.CastPlayer.prototype.updateProgress_ = function() {
 
 /**
  * Callback called when user starts seeking
+ *
+ * @private
  */
 smsplayer.CastPlayer.prototype.onSeekStart_ = function() {
   this.log_('onSeekStart');
@@ -857,6 +1445,8 @@ smsplayer.CastPlayer.prototype.onSeekStart_ = function() {
 
 /**
  * Callback called when user stops seeking.
+ *
+ * @private
  */
 smsplayer.CastPlayer.prototype.onSeekEnd_ = function() {
   this.log_('onSeekEnd');
@@ -870,6 +1460,11 @@ smsplayer.CastPlayer.prototype.onSeekEnd_ = function() {
  * Called when the player is added/removed from the screen because HDMI
  * input has changed. If we were playing but no longer visible, pause
  * the currently playing media.
+ *
+ * @see cast.receiver.CastReceiverManager#onVisibilityChanged
+ * @param {!cast.receiver.CastReceiverManager.VisibilityChangedEvent} event
+ *    Event fired when visibility of application is changed.
+ * @private
  */
 smsplayer.CastPlayer.prototype.onVisibilityChanged_ = function(event) {
   this.log_('onVisibilityChanged');
@@ -882,51 +1477,108 @@ smsplayer.CastPlayer.prototype.onVisibilityChanged_ = function(event) {
 
 /**
  * Called when we receive a PRELOAD message.
+ *
+ * @see castplayer.CastPlayer#load
+ * @param {cast.receiver.MediaManager.Event} event The load event.
+ * @return {boolean} Whether the item can be preloaded.
+ * @private
  */
 smsplayer.CastPlayer.prototype.onPreload_ = function(event) {
   this.log_('onPreload_');
-  var loadRequestData = (event.data);
+  var loadRequestData =
+      /** @type {!cast.receiver.MediaManager.LoadRequestData} */ (event.data);
   return this.preload(loadRequestData.media);
 };
 
 
 /**
  * Called when we receive a CANCEL_PRELOAD message.
+ *
+ * @see castplayer.CastPlayer#load
+ * @param {cast.receiver.MediaManager.Event} event The load event.
+ * @return {boolean} Whether the item can be preloaded.
+ * @private
  */
 smsplayer.CastPlayer.prototype.onCancelPreload_ = function(event) {
   this.log_('onCancelPreload_');
+  this.hidePreviewMode_();
   return true;
 };
 
 
 /**
  * Called when we receive a LOAD message. Calls load().
+ *
+ * @see smsplayer#load
+ * @param {cast.receiver.MediaManager.Event} event The load event.
+ * @private
  */
 smsplayer.CastPlayer.prototype.onLoad_ = function(event) {
   this.log_('onLoad_');
   this.cancelDeferredPlay_('new media is loaded');
-  this.load(new cast.receiver.MediaManager.LoadInfo((event.data), event.senderId));
+  this.load(new cast.receiver.MediaManager.LoadInfo(
+      /** @type {!cast.receiver.MediaManager.LoadRequestData} */ (event.data),
+      event.senderId));
 };
 
 
 /**
  * Called when we receive a EDIT_TRACKS_INFO message.
+ *
+ * @param {!cast.receiver.MediaManager.Event} event The editTracksInfo event.
+ * @private
  */
 smsplayer.CastPlayer.prototype.onEditTracksInfo_ = function(event) {
   this.log_('onEditTracksInfo');
   this.onEditTracksInfoOrig_(event);
 
+  // If the captions are embedded or ttml we need to enable/disable tracks
+  // as needed (vtt is processed by the media manager)
+  if (!event.data || !event.data.activeTrackIds || !this.textTrackType_) {
+    return;
+  }
   var mediaInformation = this.mediaManager_.getMediaInformation() || {};
+  var type = this.textTrackType_;
+  if (type == smsplayer.TextTrackType.SIDE_LOADED_TTML) {
+    // The player_ may not have been created yet if the type of media did
+    // not require MPL. It will be lazily created in processTtmlCues_
+    if (this.player_) {
+      this.player_.enableCaptions(false, cast.player.api.CaptionsType.TTML);
+    }
+    this.processTtmlCues_(event.data.activeTrackIds,
+        mediaInformation.tracks || []);
+  } else if (type == smsplayer.TextTrackType.EMBEDDED) {
+    this.player_.enableCaptions(false);
+    this.processInBandTracks_(event.data.activeTrackIds);
+    this.player_.enableCaptions(true);
+  }
 };
 
 
 /**
- * Called when metadata is loaded.
+ * Called when metadata is loaded, at this point we have the tracks information
+ * if we need to provision embedded captions.
+ *
+ * @param {!cast.receiver.MediaManager.LoadInfo} info The load information.
+ * @private
  */
 smsplayer.CastPlayer.prototype.onMetadataLoaded_ = function(info) {
   this.log_('onMetadataLoaded');
   this.onLoadSuccess_();
-  
+  // In the case of ttml and embedded captions we need to load the cues using
+  // MPL.
+  this.readSideLoadedTextTrackType_(info);
+
+  if (this.textTrackType_ ==
+      smsplayer.TextTrackType.SIDE_LOADED_TTML &&
+      info.message && info.message.activeTrackIds && info.message.media &&
+      info.message.media.tracks) {
+    this.processTtmlCues_(
+        info.message.activeTrackIds, info.message.media.tracks);
+  } else if (!this.textTrackType_) {
+    // If we do not have a textTrackType, check if the tracks are embedded
+    this.maybeLoadEmbeddedTracksMetadata_(info);
+  }
   // Only send load completed when we have completed the player LOADING state
   this.metadataLoaded_ = true;
   this.maybeSendLoadCompleted_(info);
@@ -936,6 +1588,11 @@ smsplayer.CastPlayer.prototype.onMetadataLoaded_ = function(info) {
 /**
  * Called when the media could not be successfully loaded. Transitions to
  * IDLE state and calls the original media manager implementation.
+ *
+ * @see cast.receiver.MediaManager#onLoadMetadataError
+ * @param {!cast.receiver.MediaManager.LoadInfo} event The data
+ *     associated with a LOAD event.
+ * @private
  */
 smsplayer.CastPlayer.prototype.onLoadMetadataError_ = function(event) {
   this.log_('onLoadMetadataError_');
@@ -950,6 +1607,9 @@ smsplayer.CastPlayer.prototype.onLoadMetadataError_ = function(event) {
 
 /**
  * Cancels deferred playback.
+ *
+ * @param {string} cancelReason
+ * @private
  */
 smsplayer.CastPlayer.prototype.cancelDeferredPlay_ = function(cancelReason) {
   if (this.deferredPlayCallbackId_) {
@@ -962,6 +1622,9 @@ smsplayer.CastPlayer.prototype.cancelDeferredPlay_ = function(cancelReason) {
 
 /**
  * Defers playback start by given timeout.
+ *
+ * @param {number} timeout In msec.
+ * @private
  */
 smsplayer.CastPlayer.prototype.deferPlay_ = function(timeout) {
   this.log_('Defering playback for ' + timeout + ' ms');
@@ -981,6 +1644,8 @@ smsplayer.CastPlayer.prototype.deferPlay_ = function(timeout) {
 
 /**
  * Called when the media is successfully loaded. Updates the progress bar.
+ *
+ * @private
  */
 smsplayer.CastPlayer.prototype.onLoadSuccess_ = function() {
   this.log_('onLoadSuccess');
@@ -1000,6 +1665,10 @@ smsplayer.CastPlayer.prototype.onLoadSuccess_ = function() {
 
 /**
  * Returns the image url for the given media object.
+ *
+ * @param {!cast.receiver.media.MediaInformation} media The media.
+ * @return {string|undefined} The image url.
+ * @private
  */
 smsplayer.getMediaImageUrl_ = function(media) {
   var metadata = media.metadata || {};
@@ -1007,10 +1676,78 @@ smsplayer.getMediaImageUrl_ = function(media) {
   return images && images[0] && images[0]['url'];
 };
 
+
+/**
+ * Gets the adaptive streaming protocol creation function based on the media
+ * information.
+ *
+ * @param {!cast.receiver.media.MediaInformation} mediaInformation The
+ *     asset media information.
+ * @return {?function(cast.player.api.Host):player.StreamingProtocol}
+ *     The protocol function that corresponds to this media type.
+ * @private
+ */
+smsplayer.getProtocolFunction_ = function(mediaInformation) {
+  var url = mediaInformation.contentId;
+  var type = mediaInformation.contentType || '';
+  var path = smsplayer.getPath_(url) || '';
+  if (smsplayer.getExtension_(path) === 'm3u8' ||
+          type === 'application/x-mpegurl' ||
+          type === 'application/vnd.apple.mpegurl') {
+    return cast.player.api.CreateHlsStreamingProtocol;
+  } else if (smsplayer.getExtension_(path) === 'mpd' ||
+          type === 'application/dash+xml') {
+    return cast.player.api.CreateDashStreamingProtocol;
+  } else if (path.indexOf('.ism') > -1 ||
+          type === 'application/vnd.ms-sstr+xml') {
+    return cast.player.api.CreateSmoothStreamingProtocol;
+  }
+  return null;
+};
+
+
+/**
+ * Returns true if the media can be preloaded.
+ *
+ * @param {!cast.receiver.media.MediaInformation} media The media information.
+ * @return {boolean} whether the media can be preloaded.
+ * @private
+ */
+smsplayer.supportsPreload_ = function(media) {
+  return smsplayer.getProtocolFunction_(media) != null;
+};
+
+
+/**
+ * Returns true if the preview UI should be shown for the type of media
+ * although the media can not be preloaded.
+ *
+ * @param {!cast.receiver.media.MediaInformation} media The media information.
+ * @return {boolean} whether the media can be previewed.
+ * @private
+ */
+smsplayer.canDisplayPreview_ = function(media) {
+  var contentId = media.contentId || '';
+  var contentUrlPath = smsplayer.getPath_(contentId);
+  if (smsplayer.getExtension_(contentUrlPath) === 'mp4') {
+    return true;
+  } else if (smsplayer.getExtension_(contentUrlPath) === 'ogv') {
+    return true;
+  } else if (smsplayer.getExtension_(contentUrlPath) === 'webm') {
+    return true;
+  }
+  return false;
+};
+
+
 /**
  * Returns the type of player to use for the given media.
  * By default this looks at the media's content type, but falls back
  * to file extension if not set.
+ *
+ * @param {!cast.receiver.media.MediaInformation} media The media.
+ * @return {smsplayer.Type} The player type.
+ * @private
  */
 smsplayer.getType_ = function(media) {
   var contentId = media.contentId || '';
@@ -1053,6 +1790,10 @@ smsplayer.getType_ = function(media) {
 
 /**
  * Formats the given duration.
+ *
+ * @param {number} dur the duration (in seconds)
+ * @return {string} the time (in HH:MM:SS)
+ * @private
  */
 smsplayer.formatDuration_ = function(dur) {
   dur = Math.floor(dur);
@@ -1071,6 +1812,14 @@ smsplayer.formatDuration_ = function(dur) {
 /**
  * Adds the given className to the given element for the specified amount of
  * time.
+ *
+ * @param {!Element} element The element to add the given class.
+ * @param {string} className The class name to add to the given element.
+ * @param {number} timeout The amount of time (in ms) the class should be
+ *     added to the given element.
+ * @return {number} A numerical id, which can be used later with
+ *     window.clearTimeout().
+ * @private
  */
 smsplayer.addClassWithTimeout_ = function(element, className, timeout) {
   element.classList.add(className);
@@ -1083,6 +1832,11 @@ smsplayer.addClassWithTimeout_ = function(element, className, timeout) {
 /**
  * Causes the given element to fade out, does something, and then fades
  * it back in.
+ *
+ * @param {!Element} element The element to fade in/out.
+ * @param {number} time The total amount of time (in seconds) to transition.
+ * @param {function()} something The function that does something.
+ * @private
  */
 smsplayer.transition_ = function(element, time, something) {
   if (time <= 0 || smsplayer.isCastForAudioDevice_()) {
@@ -1099,6 +1853,10 @@ smsplayer.transition_ = function(element, time, something) {
 
 /**
  * Preloads media data that can be preloaded.
+ *
+ * @param {!cast.receiver.media.MediaInformation} media The media to load.
+ * @param {function()} doneFunc The function to call when done.
+ * @private
  */
 smsplayer.preload_ = function(media, doneFunc) {
   if (smsplayer.isCastForAudioDevice_()) {
@@ -1140,6 +1898,11 @@ smsplayer.preload_ = function(media, doneFunc) {
 
 /**
  * Causes the given element to fade in.
+ *
+ * @param {!Element} element The element to fade in.
+ * @param {number} time The amount of time (in seconds) to transition.
+ * @param {function()=} opt_doneFunc The function to call when complete.
+ * @private
  */
 smsplayer.fadeIn_ = function(element, time, opt_doneFunc) {
   smsplayer.fadeTo_(element, '', time, opt_doneFunc);
@@ -1148,6 +1911,11 @@ smsplayer.fadeIn_ = function(element, time, opt_doneFunc) {
 
 /**
  * Causes the given element to fade out.
+ *
+ * @param {!Element} element The element to fade out.
+ * @param {number} time The amount of time (in seconds) to transition.
+ * @param {function()=} opt_doneFunc The function to call when complete.
+ * @private
  */
 smsplayer.fadeOut_ = function(element, time, opt_doneFunc) {
   smsplayer.fadeTo_(element, 0, time, opt_doneFunc);
@@ -1157,6 +1925,12 @@ smsplayer.fadeOut_ = function(element, time, opt_doneFunc) {
 /**
  * Causes the given element to fade to the given opacity in the given
  * amount of time.
+ *
+ * @param {!Element} element The element to fade in/out.
+ * @param {string|number} opacity The opacity to transition to.
+ * @param {number} time The amount of time (in seconds) to transition.
+ * @param {function()=} opt_doneFunc The function to call when complete.
+ * @private
  */
 smsplayer.fadeTo_ = function(element, opacity, time, opt_doneFunc) {
   var self = this;
@@ -1176,6 +1950,10 @@ smsplayer.fadeTo_ = function(element, opacity, time, opt_doneFunc) {
 
 /**
  * Utility function to get the extension of a URL file path.
+ *
+ * @param {string} url the URL
+ * @return {string} the extension or "" if none
+ * @private
  */
 smsplayer.getExtension_ = function(url) {
   var parts = url.split('.');
@@ -1189,6 +1967,11 @@ smsplayer.getExtension_ = function(url) {
 
 /**
  * Returns the application state.
+ *
+ * @param {cast.receiver.media.MediaInformation=} opt_media The current media
+ *     metadata
+ * @return {string} The application state.
+ * @private
  */
 smsplayer.getApplicationState_ = function(opt_media) {
   if (opt_media && opt_media.metadata && opt_media.metadata.title) {
@@ -1203,6 +1986,10 @@ smsplayer.getApplicationState_ = function(opt_media) {
 
 /**
  * Returns the URL path.
+ *
+ * @param {string} url The URL
+ * @return {string} The URL path.
+ * @private
  */
 smsplayer.getPath_ = function(url) {
   var href = document.createElement('a');
@@ -1213,6 +2000,9 @@ smsplayer.getPath_ = function(url) {
 
 /**
  * Logging utility.
+ *
+ * @param {string} message to log
+ * @private
  */
 smsplayer.CastPlayer.prototype.log_ = function(message) {
   if (this.debug_ && message) {
@@ -1223,6 +2013,10 @@ smsplayer.CastPlayer.prototype.log_ = function(message) {
 
 /**
  * Sets the inner text for the given element.
+ *
+ * @param {Element} element The element.
+ * @param {string=} opt_text The text.
+ * @private
  */
 smsplayer.setInnerText_ = function(element, opt_text) {
   if (!element) {
@@ -1234,6 +2028,10 @@ smsplayer.setInnerText_ = function(element, opt_text) {
 
 /**
  * Sets the background image for the given element.
+ *
+ * @param {Element} element The element.
+ * @param {string=} opt_url The image url.
+ * @private
  */
 smsplayer.setBackgroundImage_ = function(element, opt_url) {
   if (!element) {
@@ -1247,6 +2045,9 @@ smsplayer.setBackgroundImage_ = function(element, opt_url) {
 
 /**
  * Called to determine if the receiver device is an audio device.
+ *
+ * @return {boolean} Whether the device is a Cast for Audio device.
+ * @private
  */
 smsplayer.isCastForAudioDevice_ = function() {
   var receiverManager = window.cast.receiver.CastReceiverManager.getInstance();
@@ -1261,11 +2062,15 @@ smsplayer.isCastForAudioDevice_ = function() {
 
 /**
  * Called to determine if debugging is enabled.
+ *
+ * @return {boolean} Whether debug is enabled or not.
+ * @private
  */
 smsplayer.getDebug_ = function() {
   if (window.location.href.indexOf('Debug=true') != -1) {
-	return smsplayer.ENABLE_DEBUG_;
+       return smsplayer.ENABLE_DEBUG_;
   }
 
   return smsplayer.DISABLE_DEBUG_;
 };
+
