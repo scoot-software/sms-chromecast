@@ -56,7 +56,7 @@ smsplayer.CastPlayer = function(element) {
    */
   this.type_;
 
-  this.setType_(smsplayer.Type.UNKNOWN, false);
+  this.setType_(smsplayer.Type.UNKNOWN);
 
   /**
    * The current state of the player.
@@ -368,7 +368,6 @@ smsplayer.CastPlayer.prototype.load = function(info) {
   var media = info.message.media || {};
   var contentType = media.contentType;
   var playerType = smsplayer.getType_(media);
-  var isStreaming = false;
   if (!media.contentId) {
     this.log_('Load failed: no content');
     self.onLoadMetadataError_(info);
@@ -378,7 +377,7 @@ smsplayer.CastPlayer.prototype.load = function(info) {
   } else {
     this.log_('Loading: ' + playerType);
     self.resetMediaElement_();
-    self.setType_(playerType, isStreaming);
+    self.setType_(playerType);
     switch (playerType) {
       case smsplayer.Type.AUDIO:
         self.loadAudio_(info);
@@ -599,11 +598,10 @@ smsplayer.CastPlayer.prototype.setIdleTimeout_ = function(t) {
 /**
  * Sets the type of player.
  */
-smsplayer.CastPlayer.prototype.setType_ = function(type, isStream) {
+smsplayer.CastPlayer.prototype.setType_ = function(type) {
   this.log_('setType_: ' + type);
   this.type_ = type;
   this.element_.setAttribute('type', type);
-  this.element_.setAttribute('streaming', isStreaming.toString());
   var overlay = this.getElementByClass_('.overlay');
   clearInterval(this.burnInPreventionIntervalId_);
   if (type != smsplayer.Type.AUDIO) {
