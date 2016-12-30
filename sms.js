@@ -392,18 +392,19 @@ smsplayer.CastPlayer.prototype.load = function(info) {
     self.loadMetadata_(media);
     smsplayer.preload_(media, function() {
       smsplayer.transition_(self.element_, smsplayer.TRANSITION_DURATION_, function() {
-      self.setState_(smsplayer.State.LOADING, false);
-      // Only send load completed after we reach this point so the media
-      // manager state is still loading and the sender can't send any PLAY
-      // messages
-      self.playerReady_ = true;
-      self.maybeSendLoadCompleted_(info);
-      if (self.playerAutoPlay_) {
-        // Make sure media info is displayed long enough before playback
-        // starts.
-        self.deferPlay_(smsplayer.MEDIA_INFO_DURATION_);
-        self.playerAutoPlay_ = false;
-      }
+        self.setState_(smsplayer.State.LOADING, false);
+        // Only send load completed after we reach this point so the media
+        // manager state is still loading and the sender can't send any PLAY
+        // messages
+        self.playerReady_ = true;
+        self.maybeSendLoadCompleted_(info);
+        if (self.playerAutoPlay_) {
+          // Make sure media info is displayed long enough before playback
+          // starts.
+          self.deferPlay_(smsplayer.MEDIA_INFO_DURATION_);
+          self.playerAutoPlay_ = false;
+        }
+      });
     });
   }
 };
