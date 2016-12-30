@@ -734,6 +734,7 @@ smsplayer.CastPlayer.prototype.letPlayerHandleAutoPlay_ = function(info) {
 smsplayer.CastPlayer.prototype.loadAudio_ = function(info) {
   this.log_('loadAudio_');
   var self = this;
+  var protocolFunc = null;
   var url = info.message.media.contentId;
   var protocolFunc = smsplayer.getProtocolFunction_(info.message.media);
 
