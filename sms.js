@@ -1753,11 +1753,11 @@ smsplayer.getType_ = function(media) {
   var contentId = media.contentId || '';
   var contentType = media.contentType || '';
   var contentUrlPath = smsplayer.getPath_(contentId);
-  var mediaType = media.metadata.metadataType || '';
+  var mediaType = media.customData.mediaId || '';
   
-  if(mediaType === 0) {
+  if (mediaType.indexOf('__AUDIO__') === 0) {
     return smsplayer.Type.AUDIO;
-  } else if (mediaType === 1) {
+  } else if (mediaType.indexOf('__VIDEO__' === 0) {
     return smsplayer.Type.VIDEO;
   } else if (contentType.indexOf('audio/') === 0) {
     return smsplayer.Type.AUDIO;
