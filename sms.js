@@ -39,7 +39,12 @@ smsplayer.CastPlayer = function(element) {
   /**
    * The debug setting to control receiver, MPL and player logging.
    */
-  this.debug_ = smsplayer.DISABLE_DEBUG_;
+  this.debug_ = smsplayer.getDebug_();
+
+  if (this.debug_) {
+    cast.player.api.setLoggerLevel(cast.player.api.LoggerLevel.DEBUG);
+    cast.receiver.logger.setLevelValue(cast.receiver.LoggerLevel.DEBUG);
+  }
 
   /**
    * The DOM element the player is attached.
@@ -1253,4 +1258,15 @@ smsplayer.isCastForAudioDevice_ = function() {
     }
   }
   return false;
+};
+
+/**
+ * Called to determine if debugging is enabled.
+ */
+smsplayer.getDebug_ = function() {
+  if (window.location.href.indexOf('Debug=true') != -1) {
+	return smsplayer.ENABLE_DEBUG_;
+  }
+
+  return smsplayer.DISABLE_DEBUG_;
 };
