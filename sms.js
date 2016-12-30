@@ -1753,7 +1753,7 @@ smsplayer.getType_ = function(media) {
   var contentId = media.contentId || '';
   var contentType = media.contentType || '';
   var contentUrlPath = smsplayer.getPath_(contentId);
-  var mediaType = media.customData.mediaType || '';
+  var mediaType = media.metadata.metadataType || '';
   
   if(mediaType === 0) {
     return smsplayer.Type.AUDIO;
