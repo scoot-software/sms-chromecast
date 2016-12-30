@@ -40,10 +40,6 @@ smsplayer.CastPlayer = function(element) {
    * The debug setting to control receiver, MPL and player logging.
    */
   this.debug_ = smsplayer.DISABLE_DEBUG_;
-  if (this.debug_) {
-    cast.player.api.setLoggerLevel(cast.player.api.LoggerLevel.DEBUG);
-    cast.receiver.logger.setLevelValue(cast.receiver.LoggerLevel.DEBUG);
-  }
 
   /**
    * The DOM element the player is attached.

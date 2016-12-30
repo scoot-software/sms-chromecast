@@ -29,11 +29,14 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 		<link rel="stylesheet" href="sms.css" />
         	<script type="text/javascript" src="//www.gstatic.com/cast/sdk/libs/receiver/2.0.0/cast_receiver.js"></script>
 		<script type="text/javascript" src="//www.gstatic.com/cast/sdk/libs/mediaplayer/1.0.0/media_player.js"></script>
+		<script type="text/javascript" src="sms.js"></script>
     	</head>
 
     	<body style="margin: 0">
 		<div id="player" class="player">
-        		<video id='media'/>
+        		<div class="media">
+            			<video></video>
+        		</div>
 
 			<div class="logo"></div>
         		<div class="spinner"></div>
@@ -60,24 +63,28 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 		</div>
         
 		<script type="text/javascript">
+			var playerDiv = document.getElementById('player');
+			var player = new smsplayer.CastPlayer(playerDiv);
+
 			// If you set ?Debug=true in the URL, such as a different App ID in the
 			// developer console, include debugging information.
 			if (window.location.href.indexOf('Debug=true') != -1) {
 	  			cast.receiver.logger.setLevelValue(cast.receiver.LoggerLevel.DEBUG);
 	  			cast.player.api.setLoggerLevel(cast.player.api.LoggerLevel.DEBUG);
+				player.debug_ = smsplayer.ENABLE_DEBUG_;
 			}
 
-			var mediaElement = document.getElementById('media');
+			player.start();
 
 			// Create the media manager. This will handle all media messages by default.
-			window.mediaManager = new cast.receiver.MediaManager(mediaElement);
+			//window.mediaManager = new cast.receiver.MediaManager(mediaElement);
 
 			// Remember the default value for the Receiver onLoad if this isn't an adaptive stream
-			window.defaultOnLoad = mediaManager.onLoad;
-			mediaManager.onLoad = function (event) {
+			//window.defaultOnLoad = mediaManager.onLoad;
+			//mediaManager.onLoad = function (event) {
 				// The Media Player Library requires that you call player unload between
 				// different invocations.
-	  			if (window.player !== null) {
+	  			/*if (window.player !== null) {
 	    				player.unload();    // Must unload before starting again.
 	    				window.player = null;
 	  			}
@@ -123,7 +130,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 			window.player = null;
 			console.log('Application is ready, starting system');
 			window.castReceiverManager = cast.receiver.CastReceiverManager.getInstance();
-			castReceiverManager.start();
+			castReceiverManager.start();*/
 		</script>
     	</body>
 </html>
