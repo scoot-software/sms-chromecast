@@ -1757,7 +1757,7 @@ smsplayer.getType_ = function(media) {
   
   if (mediaType.indexOf('__AUDIO__') === 0) {
     return smsplayer.Type.AUDIO;
-  } else if (mediaType.indexOf('__VIDEO__' === 0) {
+  } else if (mediaType.indexOf('__VIDEO__') === 0) {
     return smsplayer.Type.VIDEO;
   } else if (contentType.indexOf('audio/') === 0) {
     return smsplayer.Type.AUDIO;
