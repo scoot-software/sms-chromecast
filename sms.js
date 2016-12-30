@@ -741,6 +741,13 @@ smsplayer.CastPlayer.prototype.loadAudio_ = function(info) {
   this.letPlayerHandleAutoPlay_(info);
   if (protocolFunc) {
     this.log_('loadAudio_: using Media Player Library');
+    var loadErrorCallback = function() {
+      // unload player and trigger error event on media element
+      if (self.player_) {
+        self.resetMediaElement_();
+        self.mediaElement_.dispatchEvent(new Event('error'));
+      }
+    };
     var host = new cast.player.api.Host({
         'url': url,
         'mediaElement': this.mediaElement_
