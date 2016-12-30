@@ -733,8 +733,23 @@ smsplayer.CastPlayer.prototype.letPlayerHandleAutoPlay_ = function(info) {
  */
 smsplayer.CastPlayer.prototype.loadAudio_ = function(info) {
   this.log_('loadAudio_');
+  var self = this;
+  var url = info.message.media.contentId;
+  var protocolFunc = smsplayer.getProtocolFunction_(info.message.media);
+
   this.letPlayerHandleAutoPlay_(info);
-  this.loadDefault_(info);
+  if (protocolFunc) {
+    this.log_('loadAudio_: using Media Player Library');
+    var host = new cast.player.api.Host({
+        'url': url,
+        'mediaElement': this.mediaElement_
+    });
+    host.onError = loadErrorCallback;
+    this.player_ = new cast.player.api.Player(host);
+    this.player_.load(protocolFunc(host));
+  }
+  
+  this.loadMediaManagerInfo_(info, !!protocolFunc);
 };
 
 
