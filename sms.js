@@ -749,7 +749,6 @@ smsplayer.CastPlayer.prototype.loadAudio_ = function(info) {
     // getState()['underflow]'
     this.mediaElement_.removeEventListener('stalled', this.bufferingHandler_);
     this.mediaElement_.removeEventListener('waiting', this.bufferingHandler_);
-    this.log_('loadAudio_: using Media Player Library');
     var loadErrorCallback = function() {
       // unload player and trigger error event on media element
       if (self.player_) {
