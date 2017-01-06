@@ -739,7 +739,16 @@ smsplayer.CastPlayer.prototype.loadAudio_ = function(info) {
   var protocolFunc = smsplayer.getProtocolFunction_(info.message.media);
 
   this.letPlayerHandleAutoPlay_(info);
-  if (protocolFunc) {
+  if (!protocolFunc) {
+    this.log_('loadAudio_: using MediaElement');
+    this.mediaElement_.addEventListener('stalled', this.bufferingHandler_, false);
+    this.mediaElement_.addEventListener('waiting', this.bufferingHandler_, false);
+  } else {
+    this.log_('loadAudio_: using Media Player Library');
+    // When MPL is used, buffering status should be detected by
+    // getState()['underflow]'
+    this.mediaElement_.removeEventListener('stalled', this.bufferingHandler_);
+    this.mediaElement_.removeEventListener('waiting', this.bufferingHandler_);
     this.log_('loadAudio_: using Media Player Library');
     var loadErrorCallback = function() {
       // unload player and trigger error event on media element
@@ -779,10 +788,8 @@ smsplayer.CastPlayer.prototype.loadVideo_ = function(info) {
   this.letPlayerHandleAutoPlay_(info);
   if (!protocolFunc) {
     this.log_('loadVideo_: using MediaElement');
-    this.mediaElement_.addEventListener('stalled', this.bufferingHandler_,
-        false);
-    this.mediaElement_.addEventListener('waiting', this.bufferingHandler_,
-        false);
+    this.mediaElement_.addEventListener('stalled', this.bufferingHandler_, false);
+    this.mediaElement_.addEventListener('waiting', this.bufferingHandler_, false);
   } else {
     this.log_('loadVideo_: using Media Player Library');
     // When MPL is used, buffering status should be detected by
