@@ -2006,7 +2006,7 @@ smsplayer.getPath_ = function(url) {
  */
 smsplayer.CastPlayer.prototype.getTranscodeProfile_ = function(info) {
   var id = info.message.media.contentId;
-  var url = info.message.media.customData.serverUrl;
+  var baseUrl = info.message.media.customData.serverUrl;
   var quality = info.message.media.customData.quality || 0;
 
   var request = new XMLHttpRequest();
@@ -2038,7 +2038,7 @@ smsplayer.CastPlayer.prototype.getTranscodeProfile_ = function(info) {
  * @private
  */
 smsplayer.CastPlayer.prototype.initialiseStream_ = function(info, profile) {
-  var url = info.message.media.customData.serverUrl;
+  var baseUrl = info.message.media.customData.serverUrl;
   var jobId = profile.id;
   var streamUrl = baseUrl + '/stream/' + jobId;
 
