@@ -217,6 +217,12 @@ smsplayer.CastPlayer = function(element) {
   this.receiverManager_.setApplicationState(
       smsplayer.getApplicationState_());
 
+  /**
+   * The current session id of the player.
+   * @private {uuid}
+   */
+  this.sessionId_ = this.receiverManager_.getApplicationData().sessionId;
+
 
   /**
    * The remote media object.
@@ -279,6 +285,15 @@ smsplayer.CastPlayer = function(element) {
   this.mediaManager_.onCancelPreload = this.onCancelPreload_.bind(this);
 };
 
+/**
+ * Transcode Parameters.
+ */
+smsplayer.CLIENT = 'chromecast';
+smsplayer.FILES = 'aac,mp3,mp4,wav,webm';
+smsplayer.CODECS = 'h264,vp8,mp3,aac,vorbis,pcm';
+smsplayer.MCH_CODECS = '';
+smsplayer.FORMAT = 'hls';
+smsplayer.SAMPLE_RATE = 48000;
 
 /**
  * The amount of time in a given state before the player goes idle.
@@ -566,63 +581,8 @@ smsplayer.CastPlayer.prototype.preloadVideo_ = function(mediaInformation) {
 smsplayer.CastPlayer.prototype.load = function(info) {
   this.log_('onLoad_');
   clearTimeout(this.idleTimerId_);
-  var self = this;
-  var media = info.message.media || {};
-  var contentType = media.contentType;
-  var playerType = smsplayer.getType_(media);
-  var isLiveStream = media.streamType === cast.receiver.media.StreamType.LIVE;
-  if (!media.contentId) {
-    this.log_('Load failed: no content');
-    self.onLoadMetadataError_(info);
-  } else if (playerType === smsplayer.Type.UNKNOWN) {
-    this.log_('Load failed: unknown content type: ' + contentType);
-    self.onLoadMetadataError_(info);
-  } else {
-    this.log_('Loading: ' + playerType);
-    self.resetMediaElement_();
-    self.setType_(playerType, isLiveStream);
-    var preloaded = false;
-    switch (playerType) {
-      case smsplayer.Type.AUDIO:
-        self.loadAudio_(info);
-        break;
-      case smsplayer.Type.VIDEO:
-        preloaded = self.loadVideo_(info);
-        break;
-    }
-    self.playerReady_ = false;
-    self.metadataLoaded_ = false;
-    self.loadMetadata_(media);
-    self.showPreviewModeMetadata(false);
-    self.displayPreviewMode_ = false;
-    smsplayer.preload_(media, function() {
-      self.log_('preloaded=' + preloaded);
-      if (preloaded) {
-        // Data is ready to play so transiton directly to playing.
-        self.setState_(smsplayer.State.PLAYING, false);
-        self.playerReady_ = true;
-        self.maybeSendLoadCompleted_(info);
-        // Don't display metadata again, since autoplay already did that.
-        self.deferPlay_(0);
-        self.playerAutoPlay_ = false;
-      } else {
-        smsplayer.transition_(self.element_, smsplayer.TRANSITION_DURATION_, function() {
-          self.setState_(smsplayer.State.LOADING, false);
-          // Only send load completed after we reach this point so the media
-          // manager state is still loading and the sender can't send any PLAY
-          // messages
-          self.playerReady_ = true;
-          self.maybeSendLoadCompleted_(info);
-          if (self.playerAutoPlay_) {
-            // Make sure media info is displayed long enough before playback
-            // starts.
-            self.deferPlay_(smsplayer.MEDIA_INFO_DURATION_);
-            self.playerAutoPlay_ = false;
-          }
-        });
-      }
-    });
-  }
+
+  this.getTranscodeProfile_(info);
 };
 
 /**
@@ -734,8 +694,8 @@ smsplayer.CastPlayer.prototype.letPlayerHandleAutoPlay_ = function(info) {
 smsplayer.CastPlayer.prototype.loadAudio_ = function(info) {
   this.log_('loadAudio_');
   var self = this;
-  var protocolFunc = null;
   var url = info.message.media.contentId;
+  var protocolFunc = null;
   var protocolFunc = smsplayer.getProtocolFunction_(info.message.media);
 
   this.letPlayerHandleAutoPlay_(info);
@@ -2030,6 +1990,116 @@ smsplayer.getPath_ = function(url) {
   var href = document.createElement('a');
   href.href = url;
   return href.pathname || '';
+};
+
+/**
+ * Returns the transcode profile for the current stream.
+ *
+ * @param {string} url The SMS server URL.
+ * @param {long} id The media element ID.
+ * @param {byte} quality Transcode quality for stream.
+ * @return {string} The transcode profile.
+ * @private
+ */
+smsplayer.getTranscodeProfile_ = function(info) {
+  var id = info.message.media.contentId;
+  var url = info.message.media.customData.serverUrl;
+  var quality = info.message.media.customData.quality || 0;
+
+  var request = new XMLHttpRequest();
+  var url = baseUrl + '/stream/initialise/' + this.sessionId_ + '/' + id;
+  url += '?client=' + smsplayer.CLIENT;		
+  url += '&files=' + smsplayer.FILES;
+  url += '&codecs=' + smsplayer.CODECS;
+  url += '&mchcodecs=' + smsplayer.MCH_CODECS;
+  url += '&format=' + smsplayer.FORMAT;
+  url += '&quality=' + quality;
+  url += '&samplerate=' + smsplayer.SAMPLE_RATE;
+
+  xmlhttp.onreadystatechange = function() {
+    if (this.readyState == 4 && this.status == 200) {
+      var profile = JSON.parse(this.responseText);
+      smsplayer.initialiseStream_(info, profile);
+    }
+  };
+  
+  xmlhttp.open("GET", request, true);
+  xmlhttp.send();
+};
+
+/**
+ * Initialises a stream from a transcode profile.
+ *
+ * @param {string} url The SMS server URL.
+ * @param {string} profile The transcode profile.
+ * @private
+ */
+smsplayer.initialiseStream_ = function(info, profile) {
+  var url = info.message.media.customData.serverUrl;
+  var jobId = profile.id;
+  var streamUrl = baseUrl + '/stream/' + jobId;
+
+  var self = this;
+  var media = info.message.media || {};
+  var contentType = media.contentType;
+  var playerType = smsplayer.getType_(media);
+  var isLiveStream = media.streamType === cast.receiver.media.StreamType.LIVE;
+
+  // Set stream url
+  media.contentId = streamUrl;
+
+  if (!media.contentId) {
+    this.log_('Load failed: no content');
+    self.onLoadMetadataError_(info);
+  } else if (playerType === smsplayer.Type.UNKNOWN) {
+    this.log_('Load failed: unknown content type: ' + contentType);
+    self.onLoadMetadataError_(info);
+  } else {
+    this.log_('Loading: ' + playerType);
+    self.resetMediaElement_();
+    self.setType_(playerType, isLiveStream);
+    var preloaded = false;
+    switch (playerType) {
+      case smsplayer.Type.AUDIO:
+        self.loadAudio_(info);
+        break;
+      case smsplayer.Type.VIDEO:
+        preloaded = self.loadVideo_(info);
+        break;
+    }
+    self.playerReady_ = false;
+    self.metadataLoaded_ = false;
+    self.loadMetadata_(media);
+    self.showPreviewModeMetadata(false);
+    self.displayPreviewMode_ = false;
+    smsplayer.preload_(media, function() {
+      self.log_('preloaded=' + preloaded);
+      if (preloaded) {
+        // Data is ready to play so transiton directly to playing.
+        self.setState_(smsplayer.State.PLAYING, false);
+        self.playerReady_ = true;
+        self.maybeSendLoadCompleted_(info);
+        // Don't display metadata again, since autoplay already did that.
+        self.deferPlay_(0);
+        self.playerAutoPlay_ = false;
+      } else {
+        smsplayer.transition_(self.element_, smsplayer.TRANSITION_DURATION_, function() {
+          self.setState_(smsplayer.State.LOADING, false);
+          // Only send load completed after we reach this point so the media
+          // manager state is still loading and the sender can't send any PLAY
+          // messages
+          self.playerReady_ = true;
+          self.maybeSendLoadCompleted_(info);
+          if (self.playerAutoPlay_) {
+            // Make sure media info is displayed long enough before playback
+            // starts.
+            self.deferPlay_(smsplayer.MEDIA_INFO_DURATION_);
+            self.playerAutoPlay_ = false;
+          }
+        });
+      }
+    });
+  }
 };
 
 
