@@ -2044,12 +2044,12 @@ smsplayer.initialiseStream_ = function(info, profile) {
 
   var self = this;
   var media = info.message.media || {};
+  media.contentType = profile.mimeType;
+  media.contentId = streamUrl;
+
   var contentType = media.contentType;
   var playerType = smsplayer.getType_(media);
   var isLiveStream = media.streamType === cast.receiver.media.StreamType.LIVE;
-
-  // Set stream url
-  media.contentId = streamUrl;
 
   if (!media.contentId) {
     this.log_('Load failed: no content');
