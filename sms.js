@@ -2004,7 +2004,7 @@ smsplayer.getPath_ = function(url) {
  * @return {string} The transcode profile.
  * @private
  */
-smsplayer.getTranscodeProfile_ = function(info) {
+smsplayer.CastPlayer.prototype.getTranscodeProfile_ = function(info) {
   var id = info.message.media.contentId;
   var url = info.message.media.customData.serverUrl;
   var quality = info.message.media.customData.quality || 0;
@@ -2022,7 +2022,7 @@ smsplayer.getTranscodeProfile_ = function(info) {
   xmlhttp.onreadystatechange = function() {
     if (this.readyState == 4 && this.status == 200) {
       var profile = JSON.parse(this.responseText);
-      smsplayer.initialiseStream_(info, profile);
+      this.initialiseStream_(info, profile);
     }
   };
   
@@ -2037,7 +2037,7 @@ smsplayer.getTranscodeProfile_ = function(info) {
  * @param {string} profile The transcode profile.
  * @private
  */
-smsplayer.initialiseStream_ = function(info, profile) {
+smsplayer.CastPlayer.prototype.initialiseStream_ = function(info, profile) {
   var url = info.message.media.customData.serverUrl;
   var jobId = profile.id;
   var streamUrl = baseUrl + '/stream/' + jobId;
