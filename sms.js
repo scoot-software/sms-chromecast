@@ -2019,15 +2019,15 @@ smsplayer.CastPlayer.prototype.getTranscodeProfile_ = function(info) {
   url += '&quality=' + quality;
   url += '&samplerate=' + smsplayer.SAMPLE_RATE;
 
-  xmlhttp.onreadystatechange = function() {
+  request.onreadystatechange = function() {
     if (this.readyState == 4 && this.status == 200) {
       var profile = JSON.parse(this.responseText);
       this.initialiseStream_(info, profile);
     }
   };
   
-  xmlhttp.open("GET", request, true);
-  xmlhttp.send();
+  request.open("GET", request, true);
+  request.send();
 };
 
 /**
