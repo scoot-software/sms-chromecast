@@ -221,7 +221,7 @@ smsplayer.CastPlayer = function(element) {
    * The current session id of the player.
    * @private {uuid}
    */
-  this.sessionId_ = this.receiverManager_.getApplicationData().sessionId;
+  this.sessionId_;
 
 
   /**
@@ -1216,6 +1216,10 @@ smsplayer.CastPlayer.prototype.updateApplicationState_ = function() {
  */
 smsplayer.CastPlayer.prototype.onReady_ = function() {
   this.log_('onReady');
+
+  // Set session ID
+  this.sessionId_ = this.receiverManager_.getApplicationData().sessionId;
+
   this.setState_(smsplayer.State.IDLE, false);
 };
 
