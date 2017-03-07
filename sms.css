@@ -151,19 +151,6 @@ body {
   top: auto;
 }
 
-.player .watermark {
-  position: absolute;
-  top: 64px;
-  left: 64px;
-  bottom: 64px;
-  right: 64px;
-  display: none;
-  background-position: bottom right;
-  background-repeat: no-repeat;
-  margin-bottom: 54px;
-  background-image: url("assets/watermark.png");
-}
-
 .player .gradient {
   display: none;
   opacity: 0.9;
@@ -322,10 +309,6 @@ body {
 
 .player[type="video"][state="loading"] .overlay,
 .player[type="video"][state="loading"] .controls,
-.player[type="video"][state="loading"] .watermark {
-  display: block;
-}
-
 .player[type="video"][state="loading"] .controls-cur-time,
 .player[type="video"][state="loading"] .controls-total-time,
 .player[type="video"][state="loading"] .controls-progress-thumb,
@@ -393,17 +376,11 @@ body {
 
 .player[type="video"][state="paused"] .overlay,
 .player[type="video"][state="paused"] .gradient,
-.player[type="video"][state="paused"] .watermark {
-  display: block;
-  visibility: visible;
-}
-
 .player[type="video"][state="paused"] .controls-play-pause {
   background-image: url("assets/paused.png");
 }
 
 .player[type="video"][state="paused"] .controls,
-.player[type="video"][state="paused"] .watermark,
 .player[type="video"][state="paused"]:not(.seeking) .controls-cur-time,
 .player[type="video"][state="paused"]:not(.seeking) .controls-total-time,
 .player[type="video"][state="paused"]:not(.seeking) .controls-progress {
@@ -447,11 +424,6 @@ body {
 
 .player[type="video"][state="playing"] .overlay,
 .player[type="video"][state="playing"] .gradient,
-.player[type="video"][state="playing"] .watermark {
-  display: block;
-  visibility: hidden;
-}
-
 .player[type="video"][state="playing"].seeking .overlay,
 .player[type="video"][state="playing"].seeking .gradient {
   display: block;
@@ -495,11 +467,6 @@ body {
 
 .player[type="video"][state="playing"][preview-mode="true"] .overlay,
 .player[type="video"][state="playing"][preview-mode="true"] .gradient,
-.player[type="video"][state="playing"][preview-mode="true"] .watermark {
-  display: block;
-  visibility: visible;
-}
-
 .player[type="video"][state="playing"][preview-mode="true"] .media-info {
   display: none;
 }
@@ -553,13 +520,6 @@ body {
 .player[type="audio"][state="paused"] .overlay {
   display: block;
   margin: 0 !important;
-}
-
-.player[type="audio"][state="loading"] .watermark,
-.player[type="audio"][state="paused"] .watermark {
-  display: block;
-  margin: 0 !important;
-  margin-bottom: 54px !important;
 }
 
 .player[type="audio"][state="loading"] .gradient,
@@ -662,12 +622,6 @@ body {
 .player[type="audio"][state="playing"] .controls-total-time,
 .player[type="audio"][state="playing"] .controls-play-pause {
   display: none;
-}
-
-.player[type="audio"][state="buffering"] .watermark,
-.player[type="audio"][state="playing"] .watermark {
-  display: none;
-  margin-bottom: 0;
 }
 
 .player[type="audio"][state="buffering"] .overlay,
