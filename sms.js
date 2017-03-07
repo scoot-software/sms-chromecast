@@ -2026,7 +2026,7 @@ smsplayer.CastPlayer.prototype.getTranscodeProfile_ = function(info) {
     }
   };
   
-  request.open("GET", request, true);
+  request.open("GET", url, true);
   request.send();
 };
 
