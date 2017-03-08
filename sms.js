@@ -1447,7 +1447,6 @@ smsplayer.CastPlayer.prototype.onStop_ = function(event) {
  */
 smsplayer.CastPlayer.prototype.onEnded_ = function() {
   this.log_('onEnded');
-  smsplayer.endJob_(this.curServerUrl_, this.curJobId_);
   this.setState_(smsplayer.State.IDLE, true);
   this.hidePreviewMode_();
 };
@@ -1460,6 +1459,7 @@ smsplayer.CastPlayer.prototype.onEnded_ = function() {
  */
 smsplayer.CastPlayer.prototype.onAbort_ = function() {
   this.log_('onAbort');
+  smsplayer.endJob_(this.curServerUrl_, this.curJobId_);
   this.setState_(smsplayer.State.IDLE, true);
   this.hidePreviewMode_();
 };
