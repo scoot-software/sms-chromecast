@@ -210,12 +210,10 @@ smsplayer.CastPlayer = function(element) {
    */
   this.receiverManager_ = cast.receiver.CastReceiverManager.getInstance();
   this.receiverManager_.onReady = this.onReady_.bind(this);
-  this.receiverManager_.onSenderDisconnected =
-      this.onSenderDisconnected_.bind(this);
-  this.receiverManager_.onVisibilityChanged =
-      this.onVisibilityChanged_.bind(this);
-  this.receiverManager_.setApplicationState(
-      smsplayer.getApplicationState_());
+  this.receiverManager_.onShutdown = this.onShutdown_.bind(this);
+  this.receiverManager_.onSenderDisconnected = this.onSenderDisconnected_.bind(this);
+  this.receiverManager_.onVisibilityChanged = this.onVisibilityChanged_.bind(this);
+  this.receiverManager_.setApplicationState(smsplayer.getApplicationState_());
 
   /**
    * The current session id of the player.
@@ -1304,6 +1302,16 @@ smsplayer.CastPlayer.prototype.onReady_ = function() {
   this.setState_(smsplayer.State.IDLE, false);
 };
 
+/**
+ * Called when the session is shutdown. End any existing streaming sessions to free
+ * resources on the server.
+ *
+ * @private
+ */
+smsplayer.CastPlayer.prototype.onShutdown_ = function() {
+  this.log_('onShutdown');
+  smsplayer.endJob_(this.curServerUrl_, this.curJobId_);
+};
 
 /**
  * Called when a sender disconnects from the app.
