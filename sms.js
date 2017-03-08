@@ -582,7 +582,73 @@ smsplayer.CastPlayer.prototype.load = function(info) {
   this.log_('onLoad_');
   clearTimeout(this.idleTimerId_);
 
-  this.getTranscodeProfile_(info);
+  this.getTranscodeProfile_(info, function(profile) {
+    var baseUrl = info.message.media.customData.serverUrl;
+    var jobId = profile.id;
+    var streamUrl = baseUrl + '/stream/' + jobId;
+
+    var self = this;
+    var media = info.message.media || {};
+    media.contentType = profile.mimeType;
+    media.contentId = streamUrl;
+
+    var contentType = media.contentType;
+    var playerType = smsplayer.getType_(media);
+    var isLiveStream = media.streamType === cast.receiver.media.StreamType.LIVE;
+
+    if (!media.contentId) {
+      this.log_('Load failed: no content');
+      self.onLoadMetadataError_(info);
+    } else if (playerType === smsplayer.Type.UNKNOWN) {
+      this.log_('Load failed: unknown content type: ' + contentType);
+      self.onLoadMetadataError_(info);
+    } else {
+      this.log_('Loading: ' + playerType);
+      self.resetMediaElement_();
+      self.setType_(playerType, isLiveStream);
+      var preloaded = false;
+      switch (playerType) {
+        case smsplayer.Type.AUDIO:
+          self.loadAudio_(info);
+          break;
+        case smsplayer.Type.VIDEO:
+          preloaded = self.loadVideo_(info);
+          break;
+      }
+      self.playerReady_ = false;
+      self.metadataLoaded_ = false;
+      self.loadMetadata_(media);
+      self.showPreviewModeMetadata(false);
+      self.displayPreviewMode_ = false;
+      smsplayer.preload_(media, function() {
+        self.log_('preloaded=' + preloaded);
+        if (preloaded) {
+          // Data is ready to play so transiton directly to playing.
+          self.setState_(smsplayer.State.PLAYING, false);
+          self.playerReady_ = true;
+          self.maybeSendLoadCompleted_(info);
+          // Don't display metadata again, since autoplay already did that.
+          self.deferPlay_(0);
+          self.playerAutoPlay_ = false;
+        } else {
+          smsplayer.transition_(self.element_, smsplayer.TRANSITION_DURATION_, function() {
+            self.setState_(smsplayer.State.LOADING, false);
+            // Only send load completed after we reach this point so the media
+            // manager state is still loading and the sender can't send any PLAY
+            // messages
+            self.playerReady_ = true;
+            self.maybeSendLoadCompleted_(info);
+            if (self.playerAutoPlay_) {
+              // Make sure media info is displayed long enough before playback
+              // starts.
+              self.deferPlay_(smsplayer.MEDIA_INFO_DURATION_);
+              self.playerAutoPlay_ = false;
+            }
+          });
+        }
+      });
+    }
+  });
 };
 
 /**
@@ -2004,7 +2070,7 @@ smsplayer.getPath_ = function(url) {
  * @return {string} The transcode profile.
  * @private
  */
-smsplayer.CastPlayer.prototype.getTranscodeProfile_ = function(info) {
+smsplayer.CastPlayer.prototype.getTranscodeProfile_ = function(info, loadFunc) {
   var id = info.message.media.contentId;
   var baseUrl = info.message.media.customData.serverUrl;
   var quality = info.message.media.customData.quality || 0;
@@ -2022,87 +2088,12 @@ smsplayer.CastPlayer.prototype.getTranscodeProfile_ = function(info) {
   request.onreadystatechange = function() {
     if (this.readyState == 4 && this.status == 200) {
       var profile = JSON.parse(this.responseText);
-      this.initialiseStream_(info, profile);
+      loadFunc(profile);
     }
   };
   
   request.open("GET", url, true);
   request.send();
-};
-
-/**
- * Initialises a stream from a transcode profile.
- *
- * @param {string} url The SMS server URL.
- * @param {string} profile The transcode profile.
- * @private
- */
-smsplayer.CastPlayer.prototype.initialiseStream_ = function(info, profile) {
-  var baseUrl = info.message.media.customData.serverUrl;
-  var jobId = profile.id;
-  var streamUrl = baseUrl + '/stream/' + jobId;
-
-  var self = this;
-  var media = info.message.media || {};
-  media.contentType = profile.mimeType;
-  media.contentId = streamUrl;
-
-  var contentType = media.contentType;
-  var playerType = smsplayer.getType_(media);
-  var isLiveStream = media.streamType === cast.receiver.media.StreamType.LIVE;
-
-  if (!media.contentId) {
-    this.log_('Load failed: no content');
-    self.onLoadMetadataError_(info);
-  } else if (playerType === smsplayer.Type.UNKNOWN) {
-    this.log_('Load failed: unknown content type: ' + contentType);
-    self.onLoadMetadataError_(info);
-  } else {
-    this.log_('Loading: ' + playerType);
-    self.resetMediaElement_();
-    self.setType_(playerType, isLiveStream);
-    var preloaded = false;
-    switch (playerType) {
-      case smsplayer.Type.AUDIO:
-        self.loadAudio_(info);
-        break;
-      case smsplayer.Type.VIDEO:
-        preloaded = self.loadVideo_(info);
-        break;
-    }
-    self.playerReady_ = false;
-    self.metadataLoaded_ = false;
-    self.loadMetadata_(media);
-    self.showPreviewModeMetadata(false);
-    self.displayPreviewMode_ = false;
-    smsplayer.preload_(media, function() {
-      self.log_('preloaded=' + preloaded);
-      if (preloaded) {
-        // Data is ready to play so transiton directly to playing.
-        self.setState_(smsplayer.State.PLAYING, false);
-        self.playerReady_ = true;
-        self.maybeSendLoadCompleted_(info);
-        // Don't display metadata again, since autoplay already did that.
-        self.deferPlay_(0);
-        self.playerAutoPlay_ = false;
-      } else {
-        smsplayer.transition_(self.element_, smsplayer.TRANSITION_DURATION_, function() {
-          self.setState_(smsplayer.State.LOADING, false);
-          // Only send load completed after we reach this point so the media
-          // manager state is still loading and the sender can't send any PLAY
-          // messages
-          self.playerReady_ = true;
-          self.maybeSendLoadCompleted_(info);
-          if (self.playerAutoPlay_) {
-            // Make sure media info is displayed long enough before playback
-            // starts.
-            self.deferPlay_(smsplayer.MEDIA_INFO_DURATION_);
-            self.playerAutoPlay_ = false;
-          }
-        });
-      }
-    });
-  }
 };
 
 
