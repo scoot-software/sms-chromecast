@@ -223,6 +223,18 @@ smsplayer.CastPlayer = function(element) {
    */
   this.sessionId_;
 
+  /**
+   * The current job id.
+   * @private {uuid}
+   */
+  this.curJobId_;
+
+  /**
+   * The current server URL.
+   * @private {string}
+   */
+  this.curServerUrl_;
+
 
   /**
    * The remote media object.
@@ -606,6 +618,8 @@ smsplayer.CastPlayer.prototype.load = function(info) {
     } else {
       self.log_('Loading: ' + playerType);
       self.resetMediaElement_();
+      self.curJobId_ = jobId;
+      self.curServerUrl_ = baseUrl;
       self.setType_(playerType, isLiveStream);
       var preloaded = false;
       switch (playerType) {
@@ -1319,6 +1333,7 @@ smsplayer.CastPlayer.prototype.onSenderDisconnected_ = function(event) {
  */
 smsplayer.CastPlayer.prototype.onError_ = function(error) {
   this.log_('onError');
+  smsplayer.endJob_(this.curServerUrl_, this.curJobId_);
   var self = this;
   smsplayer.transition_(self.element_, smsplayer.TRANSITION_DURATION_,
       function() {
@@ -1432,6 +1447,7 @@ smsplayer.CastPlayer.prototype.onStop_ = function(event) {
  */
 smsplayer.CastPlayer.prototype.onEnded_ = function() {
   this.log_('onEnded');
+  smsplayer.endJob_(this.curServerUrl_, this.curJobId_);
   this.setState_(smsplayer.State.IDLE, true);
   this.hidePreviewMode_();
 };
@@ -1444,6 +1460,7 @@ smsplayer.CastPlayer.prototype.onEnded_ = function() {
  */
 smsplayer.CastPlayer.prototype.onAbort_ = function() {
   this.log_('onAbort');
+  smsplayer.endJob_(this.curServerUrl_, this.curJobId_);
   this.setState_(smsplayer.State.IDLE, true);
   this.hidePreviewMode_();
 };
@@ -2142,8 +2159,22 @@ smsplayer.setBackgroundImage_ = function(element, opt_url) {
   element.style.display = (opt_url ? '' : 'none');
 };
 
-
 /**
+ * End a job on an SMS server.
+ *
+ * @param baseUrl {string} SMS server URL.
+ * @param id {uuid} Job ID.
+ * @private
+ */
+smsplayer.endJob_ = function(baseUrl, id) {
+  var request = new XMLHttpRequest();
+  var url = baseUrl + '/job/end/' + id;
+
+  request.open("GET", url, true);
+  request.send();
+};
+
+/*
  * Called to determine if the receiver device is an audio device.
  *
  * @return {boolean} Whether the device is a Cast for Audio device.
