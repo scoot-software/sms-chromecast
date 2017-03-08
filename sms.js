@@ -290,7 +290,7 @@ smsplayer.CastPlayer = function(element) {
  */
 smsplayer.CLIENT = 'chromecast';
 smsplayer.FILES = 'aac,mp3,mp4,wav,webm';
-smsplayer.CODECS = 'h264,vp8,mp3,aac,vorbis,pcm';
+smsplayer.CODECS = 'h264,vp8,aac,mp3,vorbis,pcm';
 smsplayer.MCH_CODECS = '';
 smsplayer.FORMAT = 'hls';
 smsplayer.SAMPLE_RATE = 48000;
