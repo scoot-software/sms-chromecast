@@ -2097,7 +2097,6 @@ smsplayer.CastPlayer.prototype.getTranscodeProfile_ = function(info, loadFunc) {
   url += '?client=' + smsplayer.CLIENT;		
   url += '&files=' + smsplayer.FILES;
   url += '&codecs=' + smsplayer.CODECS;
-  url += '&mchcodecs=' + smsplayer.MCH_CODECS;
   url += '&format=' + smsplayer.FORMAT;
   url += '&quality=' + quality;
   url += '&samplerate=' + smsplayer.SAMPLE_RATE;
