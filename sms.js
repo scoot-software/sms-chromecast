@@ -582,12 +582,13 @@ smsplayer.CastPlayer.prototype.load = function(info) {
   this.log_('onLoad_');
   clearTimeout(this.idleTimerId_);
 
-  this.getTranscodeProfile_(info, function(profile) {
+  var self = this;
+
+  self.getTranscodeProfile_(info, function(profile) {
     var baseUrl = info.message.media.customData.serverUrl;
     var jobId = profile.id;
     var streamUrl = baseUrl + '/stream/' + jobId;
 
-    var self = this;
     var media = info.message.media || {};
     media.contentType = profile.mimeType;
     media.contentId = streamUrl;
@@ -597,13 +598,13 @@ smsplayer.CastPlayer.prototype.load = function(info) {
     var isLiveStream = media.streamType === cast.receiver.media.StreamType.LIVE;
 
     if (!media.contentId) {
-      this.log_('Load failed: no content');
+      self.log_('Load failed: no content');
       self.onLoadMetadataError_(info);
     } else if (playerType === smsplayer.Type.UNKNOWN) {
-      this.log_('Load failed: unknown content type: ' + contentType);
+      self.log_('Load failed: unknown content type: ' + contentType);
       self.onLoadMetadataError_(info);
     } else {
-      this.log_('Loading: ' + playerType);
+      self.log_('Loading: ' + playerType);
       self.resetMediaElement_();
       self.setType_(playerType, isLiveStream);
       var preloaded = false;
