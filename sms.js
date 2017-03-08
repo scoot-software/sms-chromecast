@@ -301,11 +301,11 @@ smsplayer.CastPlayer = function(element) {
  * Transcode Parameters.
  */
 smsplayer.CLIENT = 'chromecast';
-smsplayer.FILES = 'aac,mp3,mp4,wav,webm';
-smsplayer.CODECS = 'h264,vp8,aac,mp3,vorbis,pcm';
+smsplayer.FILES = 'aac,mp3,mp4,flac,wav,webm';
+smsplayer.CODECS = 'h264,vp8,aac,mp3,vorbis,flac,pcm';
 smsplayer.MCH_CODECS = '';
 smsplayer.FORMAT = 'hls';
-smsplayer.SAMPLE_RATE = 48000;
+smsplayer.SAMPLE_RATE = 96000;
 
 /**
  * The amount of time in a given state before the player goes idle.
