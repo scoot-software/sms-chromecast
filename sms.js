@@ -1342,7 +1342,6 @@ smsplayer.CastPlayer.prototype.onSenderDisconnected_ = function(event) {
  */
 smsplayer.CastPlayer.prototype.onError_ = function(error) {
   this.log_('onError');
-  smsplayer.endJob_(this.curServerUrl_, this.curJobId_);
   var self = this;
   smsplayer.transition_(self.element_, smsplayer.TRANSITION_DURATION_,
       function() {
