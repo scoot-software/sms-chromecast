@@ -430,6 +430,10 @@ body {
   visibility: visible;
 }
 
+.player[type="video"][state="playing"] .media-info {
+  display: none;
+}
+
 .player[type="video"][state="playing"].seeking .media-info {
   display: none;
 }
