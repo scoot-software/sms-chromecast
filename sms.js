@@ -304,7 +304,6 @@ smsplayer.CODECS = 'h264,vp8,aac,mp3,vorbis,flac,pcm';
 smsplayer.MCH_CODECS = '';
 smsplayer.FORMAT = 'hls';
 smsplayer.SAMPLE_RATE = 96000;
-smsplayer.MAX_BITRATE = 4500;
 
 /**
  * The amount of time in a given state before the player goes idle.
@@ -2107,8 +2106,7 @@ smsplayer.CastPlayer.prototype.getTranscodeProfile_ = function(info, loadFunc) {
   url += '&codecs=' + smsplayer.CODECS;
   url += '&format=' + smsplayer.FORMAT;
   url += '&quality=' + quality;
-  url += '&samplerate=' + smsplayer.SAMPLE_RATE;
-  url += '&bitrate=' + smsplayer.MAX_BITRATE;
+  url += '&samplerate=' + smsplayer.SAMPLE_RATE;s
   url += '&direct=true';
 
   request.onreadystatechange = function() {
