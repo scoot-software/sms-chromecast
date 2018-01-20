@@ -579,7 +579,7 @@ smsplayer.CastPlayer.prototype.preloadVideo_ = function(mediaInformation) {
     self.log_('Error during preload');
   };
   self.preloadPlayer_ = new cast.player.api.Player(host);
-  self.preloadPlayer_.preload(protocolFunc(host, cast.player.api.HlsSegmentFormat.MPEG2_TS));
+  self.preloadPlayer_.preload(protocolFunc(host, cast.player.api.HlsSegmentFormat.TS_AAC));
   return true;
 };
 
