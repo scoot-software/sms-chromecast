@@ -579,7 +579,7 @@ smsplayer.CastPlayer.prototype.preloadVideo_ = function(mediaInformation) {
     self.log_('Error during preload');
   };
   self.preloadPlayer_ = new cast.player.api.Player(host);
-  self.preloadPlayer_.preload(protocolFunc(host));
+  self.preloadPlayer_.preload(protocolFunc(host, cast.player.api.HlsSegmentFormat.MPEG2_TS));
   return true;
 };
 
@@ -2090,7 +2090,7 @@ smsplayer.getPath_ = function(url) {
  * Returns the transcode profile for the current stream.
  *
  * @param {string} url The SMS server URL.
- * @param {long} id The media element ID.
+ * @param {uuid} id The media element ID.
  * @param {byte} quality Transcode quality for stream.
  * @return {string} The transcode profile.
  * @private
