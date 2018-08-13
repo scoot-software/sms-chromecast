@@ -39,7 +39,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
                 return fetch(requestData.media.contentId).then(response => {
                     if (response.ok) {
                         const contentType = response.headers.get('Content-Type') || '';
-                        requestData.media.contentType = contentType.split(";", 1);
+                        requestData.media.contentType = contentType.split(";")[0];
                         return requestData;
                     } else {
                         return new cast.framework.messages.ErrorData(cast.framework.messages.ErrorType.INVALID_REQUEST);
