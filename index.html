@@ -38,7 +38,8 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
             cast.framework.messages.MessageType.LOAD, requestData => {
                 return fetch(requestData.media.contentId).then(response => {
                     if (response.ok) {
-                        requestData.media.contentType = response.headers.get('Content-Type')
+                        const contentType = response.headers.get('Content-Type') || '';
+                        requestData.media.contentType = contentType.split(";", 1);
                         return requestData;
                     } else {
                         return new cast.framework.messages.ErrorData(cast.framework.messages.ErrorType.INVALID_REQUEST);
