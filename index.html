@@ -31,7 +31,25 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 <body>
     <cast-media-player></cast-media-player>
     <script>
-        cast.framework.CastReceiverContext.getInstance().start();
+        const context = cast.framework.CastReceiverContext.getInstance();
+        const player = context.getPlayerManager();
+
+        player.setMessageInterceptor(
+            cast.framework.messages.MessageType.LOAD, requestData => {
+                return fetch(requestData.media.contentId).then(response => {
+                    if (response.ok) {
+                        requestData.media.contentType = response.headers.get('Content-Type')
+                        return requestData;
+                    } else {
+                        return new cast.framework.messages.ErrorData(cast.framework.messages.ErrorType.INVALID_REQUEST);
+                    }
+                }).catch(error => {
+                    return new cast.framework.messages.ErrorData(cast.framework.messages.ErrorType.INVALID_REQUEST);
+                });
+            }
+        );
+
+        context.start();
     </script>
 </body>
 </html>
