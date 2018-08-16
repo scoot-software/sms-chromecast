@@ -36,10 +36,13 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
         player.setMessageInterceptor(
             cast.framework.messages.MessageType.LOAD, requestData => {
-                return fetch(requestData.media.contentId, { method: 'HEAD' }).then(response => {
+                var baseUrl = requestData.customData.serverUrl;
+                var streamUrl = baseUrl + '/stream/' + requestData.mediaSessionId + '/' + requestData.media.contentId;
+                return fetch(streamUrl, { method: 'HEAD' }).then(response => {
                     if (response.ok) {
                         const contentType = response.headers.get('Content-Type') || '';
                         requestData.media.contentType = contentType.split(";")[0];
+                        requestData.media.contentUrl = streamUrl;
                         return requestData;
                     } else {
                         return new cast.framework.messages.ErrorData(cast.framework.messages.ErrorType.INVALID_REQUEST);
