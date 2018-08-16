@@ -36,7 +36,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
         player.setMessageInterceptor(
             cast.framework.messages.MessageType.LOAD, requestData => {
-                return fetch(requestData.media.contentId).then(response => {
+                return fetch(requestData.media.contentId, { method: 'HEAD' }).then(response => {
                     if (response.ok) {
                         const contentType = response.headers.get('Content-Type') || '';
                         requestData.media.contentType = contentType.split(";")[0];
