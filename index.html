@@ -33,11 +33,13 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
     <script>
         const context = cast.framework.CastReceiverContext.getInstance();
         const player = context.getPlayerManager();
+        const applicationData  = context.getApplicationData();
 
         player.setMessageInterceptor(
             cast.framework.messages.MessageType.LOAD, requestData => {
+                var sessionId = applicationData.sessionId;
                 var baseUrl = requestData.customData.serverUrl;
-                var streamUrl = baseUrl + '/stream/' + requestData.mediaSessionId + '/' + requestData.media.contentId;
+                var streamUrl = baseUrl + '/stream/' + sessionId + '/' + requestData.media.contentId;
                 return fetch(streamUrl, { method: 'HEAD' }).then(response => {
                     if (response.ok) {
                         const contentType = response.headers.get('Content-Type') || '';
