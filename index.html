@@ -35,19 +35,36 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
         const player = context.getPlayerManager();
         
         /**
-         * The current session id of the player.
-         * @private {uuid}
+         * The current session id of the player
          */
         this.sessionId;
         
+        /**
+         * The current server url
+         */
+        this.serverUrl;
+        
+        /**
+         * Fetch the session id when ready
+         */
         context.addEventListener(cast.framework.system.EventType.READY, () => {
             this.sessionId = context.getApplicationData().sessionId;
+        });
+        
+        /**
+         * End session on shutdown
+         */
+        context.addEventListener(cast.framework.system.EventType.SHUTDOWN, () => {
+            if(this.sessionId) {
+                var url = this.serverUrl + '/session/end/' + this.sessionId;
+                fetch(url);
+            }
         });
 
         player.setMessageInterceptor(
             cast.framework.messages.MessageType.LOAD, requestData => {
-                var baseUrl = requestData.customData.serverUrl;
-                var streamUrl = baseUrl + '/stream/' + this.sessionId + '/' + requestData.media.contentId;
+                this.serverUrl = requestData.customData.serverUrl;
+                var streamUrl = this.serverUrl + '/stream/' + this.sessionId + '/' + requestData.media.contentId;
                 return fetch(streamUrl, { method: 'HEAD' }).then(response => {
                     if (response.ok) {
                         const contentType = response.headers.get('Content-Type') || '';
