@@ -71,7 +71,11 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
          * End session on shutdown
          */
         context.addEventListener(cast.framework.system.EventType.SHUTDOWN, () => {
-            fetch(config.serverUrl + '/session/end/' + config.sessionId);
+            var url = config.serverUrl + '/session/end/' + config.sessionId;
+
+            var request = new XMLHttpRequest();
+            request.open("GET", url, true);
+            request.send();
         });
         
         /**
