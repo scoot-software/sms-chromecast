@@ -67,15 +67,6 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
          */
         context.addEventListener(cast.framework.system.EventType.READY, () => {
             this.sessionId = context.getApplicationData().sessionId;
-            
-            var url = this.serverUrl + '/session/update/' + this.sessionId;
-            fetch(url, {
-                method: 'PUT',
-                body: JSON.stringify(this.clientProfile),
-                headers:{
-                    'Content-Type': 'application/json'
-                }
-            });
         });
         
         /**
@@ -93,6 +84,15 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
          */
         context.addCustomMessageListener(URL_CHANNEL, function(message) {
             this.serverUrl = message;
+            
+            var url = this.serverUrl + '/session/update/' + this.sessionId;
+            fetch(url, {
+                method: 'PUT',
+                body: JSON.stringify(this.clientProfile),
+                headers:{
+                    'Content-Type': 'application/json'
+                }
+            });
         });
 
         player.setMessageInterceptor(
