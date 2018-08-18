@@ -34,6 +34,8 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
         const context = cast.framework.CastReceiverContext.getInstance();
         const player = context.getPlayerManager();
         
+        const URL_CHANNEL = 'urn:x-cast:com.scooter1556.sms.url';
+        
         /**
          * The current session id of the player
          */
@@ -45,10 +47,35 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
         this.serverUrl;
         
         /**
+         * Client Profile
+         */
+        this.clientProfile = {
+            client: 3,
+            format: 9,
+            formats: [1,6,9,10,11,12,15,17,18],
+            codecs: [10,11,12,1000,1005,1007,1009,1011,2001],
+            mchCodecs: [],
+            videoQuality: 5,
+            audioQuality: 3,
+            maxBitrate: 12000,
+            maxSampleRate: 96000,
+            directPlay: true
+        };
+        
+        /**
          * Fetch the session id when ready
          */
         context.addEventListener(cast.framework.system.EventType.READY, () => {
             this.sessionId = context.getApplicationData().sessionId;
+            
+            var url = this.serverUrl + '/session/update/' + this.sessionId;
+            fetch(url, {
+                method: 'PUT',
+                body: JSON.stringify(this.clientProfile),
+                headers:{
+                    'Content-Type': 'application/json'
+                }
+            });
         });
         
         /**
@@ -60,10 +87,16 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
                 fetch(url);
             }
         });
+        
+        /**
+         * Message listener (URL)
+         */
+        context.addCustomMessageListener(URL_CHANNEL, function(message) {
+            this.serverUrl = message;
+        });
 
         player.setMessageInterceptor(
             cast.framework.messages.MessageType.LOAD, requestData => {
-                this.serverUrl = requestData.customData.serverUrl;
                 var streamUrl = this.serverUrl + '/stream/' + this.sessionId + '/' + requestData.media.contentId;
                 return fetch(streamUrl, { method: 'HEAD' }).then(response => {
                     if (response.ok) {
