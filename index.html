@@ -68,8 +68,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
         context.addEventListener(cast.framework.system.EventType.READY, () => {
             this.sessionId = context.getApplicationData().sessionId;
             
-            var url = this.serverUrl + '/session/update/' + this.sessionId;
-            fetch(url, {
+            fetch(this.serverUrl + '/session/update/' + this.sessionId, {
                 method: 'PUT',
                 body: JSON.stringify(this.clientProfile),
                 headers:{
@@ -85,8 +84,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
          */
         context.addEventListener(cast.framework.system.EventType.SHUTDOWN, () => {
             if(this.sessionId) {
-                var url = this.serverUrl + '/session/end/' + this.sessionId;
-                fetch(url);
+                fetch(this.serverUrl + '/session/end/' + this.sessionId);
             }
         });
         
@@ -97,6 +95,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
             console.log(event.data);
             
             if('serverUrl' in event.data) {
+                console.log(event.data.serverUrl);
                 this.serverUrl = event.data.serverUrl;
             }
         });
