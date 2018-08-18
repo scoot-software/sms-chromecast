@@ -89,7 +89,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
                 var data = JSON.stringify(this.clientProfile);
                 
                 var xhr = new XMLHttpRequest();
-                xhr.open("PUT", url, true);
+                xhr.open("POST", url, true);
                 xhr.setRequestHeader("Content-Type", "application/json");
                 xhr.send(data);
             }
