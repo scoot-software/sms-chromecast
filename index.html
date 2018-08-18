@@ -82,11 +82,11 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
         /**
          * Message listener (URL)
          */
-        context.addCustomMessageListener(SMS_CHANNEL, function(data) {
-            console.log(data);
+        context.addCustomMessageListener(SMS_CHANNEL, function(event) {
+            console.log(event.data);
             
-            if('serverUrl' in data) {
-                this.serverUrl = data.serverUrl;
+            if('serverUrl' in event.data) {
+                this.serverUrl = event.data.serverUrl;
                 
                 var url = this.serverUrl + '/session/update/' + this.sessionId;
                 fetch(url, {
