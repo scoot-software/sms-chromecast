@@ -67,6 +67,17 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
          */
         context.addEventListener(cast.framework.system.EventType.READY, () => {
             this.sessionId = context.getApplicationData().sessionId;
+            
+            var url = this.serverUrl + '/session/update/' + this.sessionId;
+            fetch(url, {
+                method: 'PUT',
+                body: JSON.stringify(this.clientProfile),
+                headers:{
+                    'Content-Type': 'application/json'
+                }
+            }).catch(error => {
+                return new cast.framework.messages.ErrorData(cast.framework.messages.ErrorType.INVALID_REQUEST);
+            });
         });
         
         /**
@@ -87,17 +98,6 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
             
             if('serverUrl' in event.data) {
                 this.serverUrl = event.data.serverUrl;
-                
-                var url = this.serverUrl + '/session/update/' + this.sessionId;
-                fetch(url, {
-                    method: 'PUT',
-                    body: JSON.stringify(this.clientProfile),
-                    headers:{
-                        'Content-Type': 'application/json'
-                    }
-                }).catch(error => {
-                    return new cast.framework.messages.ErrorData(cast.framework.messages.ErrorType.INVALID_REQUEST);
-                });
             }
         });
 
