@@ -83,6 +83,8 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
          * Message listener (URL)
          */
         context.addCustomMessageListener(URL_CHANNEL, function(message) {
+            console.log(message);
+            
             this.serverUrl = message;
             
             var url = this.serverUrl + '/session/update/' + this.sessionId;
@@ -92,6 +94,8 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
                 headers:{
                     'Content-Type': 'application/json'
                 }
+            }).catch(error => {
+                return new cast.framework.messages.ErrorData(cast.framework.messages.ErrorType.INVALID_REQUEST);
             });
         });
 
