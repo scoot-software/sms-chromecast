@@ -37,19 +37,17 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
         const SMS_CHANNEL = 'urn:x-cast:com.scooter1556.sms';
         
         /**
-         * The current session id of the player
+         * Global config
          */
-        this.sessionId;
-        
-        /**
-         * The current server url
-         */
-        this.serverUrl;
+        const config = {
+            serverUrl: "",
+            sessionId: ""
+        }
         
         /**
          * Client Profile
          */
-        this.clientProfile = {
+        const clientProfile = {
             client: 3,
             format: 9,
             formats: [1,6,9,10,11,12,15,17,18],
@@ -66,27 +64,25 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
          * Fetch the session id when ready
          */
         context.addEventListener(cast.framework.system.EventType.READY, () => {
-            this.sessionId = context.getApplicationData().sessionId;
+            config.sessionId = context.getApplicationData().sessionId;
         });
         
         /**
          * End session on shutdown
          */
         context.addEventListener(cast.framework.system.EventType.SHUTDOWN, () => {
-            if(this.sessionId) {
-                fetch(this.serverUrl + '/session/end/' + this.sessionId);
-            }
+            fetch(config.serverUrl + '/session/end/' + config.sessionId);
         });
         
         /**
          * Message listener
          */
         context.addCustomMessageListener(SMS_CHANNEL, function(event) {
-            if(event.data.hasOwnProperty("serverUrl") && event.data.hasOwnProperty("sessionId")) {
-                this.serverUrl = event.data.serverUrl;
+            if(event.data.hasOwnProperty("serverUrl")) {
+                config.serverUrl = event.data.serverUrl;
                 
-                var url = this.serverUrl + "/session/update/" + event.data.sessionId;
-                var data = JSON.stringify(this.clientProfile);
+                var url = config.serverUrl + "/session/update/" + event.data.sessionId;
+                var data = JSON.stringify(clientProfile);
                 
                 var xhr = new XMLHttpRequest();
                 xhr.open("POST", url, true);
@@ -97,10 +93,10 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
         player.setMessageInterceptor(
             cast.framework.messages.MessageType.LOAD, requestData => {
-                var streamUrl = this.serverUrl + '/stream/' + this.sessionId + '/' + requestData.media.contentId;
+                var streamUrl = config.serverUrl + '/stream/' + config.sessionId + '/' + requestData.media.contentId;
                 return fetch(streamUrl, { method: 'HEAD' }).then(response => {
                     if (response.ok) {
-                        const contentType = response.headers.get('Content-Type') || '';
+                        var contentType = response.headers.get('Content-Type') || '';
                         requestData.media.contentType = contentType.split(";")[0];
                         requestData.media.contentUrl = streamUrl;
                         return requestData;
