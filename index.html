@@ -135,6 +135,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
                         var contentType = response.headers.get('Content-Type') || '';
                         requestData.media.contentType = contentType.split(";")[0];
                         requestData.media.contentUrl = streamUrl;
+                        requestData.media.hlsSegmentFormat = cast.framework.messages.HlsSegmentFormat.E_AC3;
                         return requestData;
                     } else {
                         return new cast.framework.messages.ErrorData(cast.framework.messages.ErrorType.INVALID_REQUEST);
