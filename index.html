@@ -136,12 +136,22 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
                         return new cast.framework.messages.ErrorData(cast.framework.messages.ErrorType.INVALID_REQUEST);
                     }
                 }).then(data => {
-                    // Check AC3
+                    // AAC
+                    if(data.codecs.includes(1000)) {
+                        requestData.media.hlsSegmentFormat = cast.framework.messages.HlsSegmentFormat.AAC;
+                    }
+                    
+                    // MP3
+                    if(data.codecs.includes(1007)) {
+                        requestData.media.hlsSegmentFormat = cast.framework.messages.HlsSegmentFormat.MP3;
+                    }
+                    
+                    // AC3
                     if(data.codecs.includes(1001)) {
                         requestData.media.hlsSegmentFormat = cast.framework.messages.HlsSegmentFormat.AC3;
                     }
                     
-                    // Check E-AC-3
+                    // E-AC-3
                     if(data.codecs.includes(1002)) {
                         requestData.media.hlsSegmentFormat = cast.framework.messages.HlsSegmentFormat.E_AC3;
                     }
