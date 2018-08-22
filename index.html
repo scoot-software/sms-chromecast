@@ -171,7 +171,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
             }
         );
         
-        playerManager.addEventListener(
+        player.addEventListener(
             cast.framework.events.EventType.MEDIA_FINISHED, (event) => {
             // End job when playback finishes
             var url = config.serverUrl + '/session/end/' + config.sessionId + '/' + config.contentId;
