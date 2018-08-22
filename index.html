@@ -41,7 +41,8 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
          */
         const config = {
             serverUrl: "",
-            sessionId: ""
+            sessionId: "",
+            contentId: ""
         }
         
         /**
@@ -160,12 +161,25 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
                     requestData.media.contentType = data.mimeType;
                     requestData.media.contentUrl = config.serverUrl + '/stream/' + config.sessionId + '/' + requestData.media.contentId;
                     
+                    // Set global content id
+                    config.contentId = requestData.media.contentId;
+                    
                     return requestData;
                 }).catch(error => {
                     return new cast.framework.messages.ErrorData(cast.framework.messages.ErrorType.INVALID_REQUEST);
                 });
             }
         );
+        
+        playerManager.addEventListener(
+            cast.framework.events.EventType.MEDIA_FINISHED, (event) => {
+            // End job when playback finishes
+            var url = config.serverUrl + '/session/end/' + config.sessionId + '/' + config.contentId;
+
+            var request = new XMLHttpRequest();
+            request.open("GET", url, true);
+            request.send();
+        });
 
         context.start();
     </script>
