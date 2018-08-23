@@ -29,7 +29,14 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
     </script>
 </head>
 <body>
-    <cast-media-player></cast-media-player>
+    <cast-media-player id="player"></cast-media-player>
+    <style>
+        #player {
+            --progress-color: rgb(10, 51, 77);
+            --background-image: url("assets/background.png");
+            --splash-image: url("assets/logo.png");
+        }
+    </style>
     <script>
         const context = cast.framework.CastReceiverContext.getInstance();
         const player = context.getPlayerManager();
