@@ -41,7 +41,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
         const context = cast.framework.CastReceiverContext.getInstance();
         const player = context.getPlayerManager();
         
-        const SMS_CHANNEL = 'urn:x-cast:com.scooter1556.sms';
+        const SMS_CONFIG_CHANNEL = 'urn:x-cast:com.scooter1556.sms.config';
         
         /**
          * Global config
@@ -126,18 +126,26 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
         /**
          * Message listener
          */
-        context.addCustomMessageListener(SMS_CHANNEL, function(event) {
+        context.addCustomMessageListener(SMS_CONFIG_CHANNEL, function(event) {
             if(event.data.hasOwnProperty("serverUrl")) {
                 config.serverUrl = event.data.serverUrl;
-                
-                var url = config.serverUrl + "/session/update/" + event.data.sessionId;
-                var data = JSON.stringify(clientProfile);
-                
-                var xhr = new XMLHttpRequest();
-                xhr.open("POST", url, true);
-                xhr.setRequestHeader("Content-Type", "application/json");
-                xhr.send(data);
             }
+            
+            if(event.data.hasOwnProperty("videoQuality")) {
+                clientProfile.videoQuality = parseInt(event.data.videoQuality);
+            }
+            
+            if(event.data.hasOwnProperty("audioQuality")) {
+                clientProfile.audioQuality = parseInt(event.data.audioQuality);
+            }
+                
+            var url = config.serverUrl + "/session/update/" + event.data.sessionId;
+            var data = JSON.stringify(clientProfile);
+                
+            var xhr = new XMLHttpRequest();
+            xhr.open("POST", url, true);
+            xhr.setRequestHeader("Content-Type", "application/json");
+            xhr.send(data);
         });
 
         player.setMessageInterceptor(
