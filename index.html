@@ -49,7 +49,8 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
         const config = {
             serverUrl: "",
             sessionId: "",
-            contentId: ""
+            contentId: "",
+            lastContentId: ""
         }
         
         /**
@@ -182,6 +183,12 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
                     requestData.media.contentUrl = config.serverUrl + '/stream/' + config.sessionId + '/' + requestData.media.contentId;
                     
                     // Set global content id
+                    if(!config.contentId) {
+                        config.lastContentId = requestData.media.contentId;
+                    } else {
+                        config.lastContentId = config.contentId;
+                    }
+                    
                     config.contentId = requestData.media.contentId;
                     
                     return requestData;
@@ -194,7 +201,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
         player.addEventListener(
             cast.framework.events.EventType.MEDIA_FINISHED, (event) => {
             // End job when playback finishes
-            var url = config.serverUrl + '/session/end/' + config.sessionId + '/' + config.contentId;
+            var url = config.serverUrl + '/session/end/' + config.sessionId + '/' + config.lastContentId;
 
             var request = new XMLHttpRequest();
             request.open("GET", url, true);
