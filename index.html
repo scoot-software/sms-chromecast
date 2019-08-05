@@ -149,63 +149,64 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
             xhr.send(data);
         });
 
-        player.setMessageInterceptor(
-            cast.framework.messages.MessageType.LOAD, requestData => {
-                return fetch(config.serverUrl + '/stream/profile/' + config.sessionId + '/' + requestData.media.contentId).then(response => {
-                    if (response.ok) {
-                        return response.json();
-                    } else {
-                        return new cast.framework.messages.ErrorData(cast.framework.messages.ErrorType.INVALID_REQUEST);
-                    }
-                }).then(data => {
-                    // AAC
-                    if(data.codecs.includes(1000)) {
-                        requestData.media.hlsSegmentFormat = cast.framework.messages.HlsSegmentFormat.AAC;
-                    }
-                    
-                    // MP3
-                    if(data.codecs.includes(1007)) {
-                        requestData.media.hlsSegmentFormat = cast.framework.messages.HlsSegmentFormat.MP3;
-                    }
-                    
-                    // AC3
-                    if(data.codecs.includes(1001)) {
-                        requestData.media.hlsSegmentFormat = cast.framework.messages.HlsSegmentFormat.AC3;
-                    }
-                    
-                    // E-AC-3
-                    if(data.codecs.includes(1002)) {
-                        requestData.media.hlsSegmentFormat = cast.framework.messages.HlsSegmentFormat.E_AC3;
-                    }
-                    
-                    // Set content url and type
-                    requestData.media.contentType = data.mimeType;
-                    requestData.media.contentUrl = config.serverUrl + '/stream/' + config.sessionId + '/' + requestData.media.contentId;
-                    
-                    // Set global content id
-                    if(!config.contentId) {
-                        config.lastContentId = requestData.media.contentId;
-                    } else {
-                        config.lastContentId = config.contentId;
-                    }
-                    
-                    config.contentId = requestData.media.contentId;
-                    
-                    return requestData;
-                }).catch(error => {
+        player.setMessageInterceptor(cast.framework.messages.MessageType.LOAD, requestData => {
+            return fetch(config.serverUrl + '/stream/profile/' + config.sessionId + '/' + requestData.media.contentId).then(response => {
+                if (response.ok) {
+                    return response.json();
+                } else {
                     return new cast.framework.messages.ErrorData(cast.framework.messages.ErrorType.INVALID_REQUEST);
-                });
-            }
-        );
+                }
+            }).then(data => {
+                // AAC
+                if(data.codecs.includes(1000)) {
+                    requestData.media.hlsSegmentFormat = cast.framework.messages.HlsSegmentFormat.AAC;
+                }
+                    
+                // MP3
+                if(data.codecs.includes(1007)) {
+                    requestData.media.hlsSegmentFormat = cast.framework.messages.HlsSegmentFormat.MP3;
+                }
+                    
+                // AC3
+                if(data.codecs.includes(1001)) {
+                    requestData.media.hlsSegmentFormat = cast.framework.messages.HlsSegmentFormat.AC3;
+                }
+                    
+                // E-AC-3
+                if(data.codecs.includes(1002)) {
+                    requestData.media.hlsSegmentFormat = cast.framework.messages.HlsSegmentFormat.E_AC3;
+                }
+                    
+                // Set content url and type
+                requestData.media.contentType = data.mimeType;
+                requestData.media.contentUrl = config.serverUrl + '/stream/' + config.sessionId + '/' + requestData.media.contentId;
+                    
+                // Set global content id
+                if(!config.contentId) {
+                    config.lastContentId = requestData.media.contentId;
+                } else {
+                    config.lastContentId = config.contentId;
+                }
+                    
+                config.contentId = requestData.media.contentId;
+                    
+                return requestData;
+            }).catch(error => {
+                return new cast.framework.messages.ErrorData(cast.framework.messages.ErrorType.INVALID_REQUEST);
+            });
+        });
         
-        player.addEventListener(
-            cast.framework.events.EventType.MEDIA_FINISHED, (event) => {
+        player.addEventListener(cast.framework.events.EventType.MEDIA_FINISHED, event => {
             // End job when playback finishes
             var url = config.serverUrl + '/session/end/' + config.sessionId + '/' + config.lastContentId;
 
             var request = new XMLHttpRequest();
             request.open("GET", url, true);
             request.send();
+        });
+        
+        player.addEventListener(cast.framework.events.EventType.MEDIA_FINISHED, event => {
+            console.log(event);
         });
 
         context.start();
