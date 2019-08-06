@@ -117,11 +117,13 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
          * End session on shutdown
          */
         context.addEventListener(cast.framework.system.EventType.SHUTDOWN, () => {
-            var url = config.serverUrl + '/session/end/' + config.sessionId;
+            if(config.sessionId) {
+                var url = config.serverUrl + '/session/end/' + config.sessionId;
 
-            var request = new XMLHttpRequest();
-            request.open("GET", url, true);
-            request.send();
+                var request = new XMLHttpRequest();
+                request.open("GET", url, true);
+                request.send();
+            }
         });
         
         /**
@@ -200,7 +202,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
                 request.send();
             }
 
-            if(config.contentId != config.nextContentId) {
+            if(config.nextContentId && (config.contentId != config.nextContentId)) {
                 if(event.endedReason == cast.framework.events.EndedReason.STOPPED) {
                     var url = config.serverUrl + '/session/end/' + config.sessionId + '/' + config.nextContentId;
                     request.open("GET", url, true);
