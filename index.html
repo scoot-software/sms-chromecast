@@ -50,7 +50,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
             serverUrl: "",
             sessionId: "",
             contentId: "",
-            lastContentId: ""
+            nextContentId: ""
         }
         
         /**
@@ -181,14 +181,8 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
                 requestData.media.contentType = data.mimeType;
                 requestData.media.contentUrl = config.serverUrl + '/stream/' + config.sessionId + '/' + requestData.media.contentId;
                     
-                // Set global content id
-                if(!config.contentId) {
-                    config.lastContentId = requestData.media.contentId;
-                } else {
-                    config.lastContentId = config.contentId;
-                }
-                    
-                config.contentId = requestData.media.contentId;
+                // Set next content id
+                config.nextContentId = requestData.media.contentId;
                     
                 return requestData;
             }).catch(error => {
@@ -198,16 +192,26 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
         
         player.addEventListener(cast.framework.events.EventType.MEDIA_FINISHED, event => {
             // End job when playback finishes
-            var url = config.serverUrl + '/session/end/' + config.sessionId + '/' + config.ContentId;
-
             var request = new XMLHttpRequest();
-            request.open("GET", url, true);
-            request.send();
+
+            if(config.contentId) {
+                var url = config.serverUrl + '/session/end/' + config.sessionId + '/' + config.contentId;
+                request.open("GET", url, true);
+                request.send();
+            }
+
+            if(config.contentId != config.nextContentId) {
+                if(event.endedReason == cast.framework.events.EndedReason.STOPPED) {
+                    var url = config.serverUrl + '/session/end/' + config.sessionId + '/' + config.nextContentId;
+                    request.open("GET", url, true);
+                    request.send();
+                }
+            }
+
         });
         
-        player.addEventListener(cast.framework.events.EventType.ALL, event => {
-            console.log(event);
-            console.log(config.contentId);
+        player.addEventListener(cast.framework.events.EventType.CLIP_STARTED, event => {
+            config.contentId = config.nextContentId;
         });
 
         context.start();
