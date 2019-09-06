@@ -66,6 +66,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
             audioQuality: 3,
             maxBitrate: 12000,
             maxSampleRate: 48000,
+            replaygain: 0,
             directPlay: true
         };
         
@@ -140,6 +141,10 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
             
             if(event.data.hasOwnProperty("audioQuality")) {
                 clientProfile.audioQuality = parseInt(event.data.audioQuality);
+            }
+            
+            if(event.data.hasOwnProperty("replaygain")) {
+                clientProfile.replaygain = parseInt(event.data.replaygain);
             }
                 
             var url = config.serverUrl + "/session/update/" + event.data.sessionId;
