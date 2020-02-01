@@ -183,6 +183,9 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
                 if(data.codecs.includes(1002)) {
                     requestData.media.hlsSegmentFormat = cast.framework.messages.HlsSegmentFormat.E_AC3;
                 }
+                
+                // Video
+                requestData.media.hlsVideoSegmentFormat = cast.framework.messages.HlsVideoSegmentFormat.FMP4;
                     
                 // Set content url and type
                 requestData.media.contentType = data.mimeType;
