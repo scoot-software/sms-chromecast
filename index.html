@@ -164,8 +164,8 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
                 return error;
             }
 
-            if(!loadRequestData.media.entity) {
-                return loadRequestData;
+            if(!requestData.media.entity) {
+                return requestData;
             }
             
             return fetch(config.serverUrl + '/stream/profile/' + config.sessionId + '/' + requestData.media.entity)
