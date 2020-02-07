@@ -157,12 +157,26 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
         });
 
         player.setMessageInterceptor(cast.framework.messages.MessageType.LOAD, requestData => {
-            return fetch(config.serverUrl + '/stream/profile/' + config.sessionId + '/' + requestData.media.contentId).then(response => {
+            const error = new cast.framework.messages.ErrorData(cast.framework.messages.ErrorType.LOAD_FAILED);
+            
+            if(!requestData.media) {
+                error.reason = cast.framework.messages.ErrorReason.INVALID_PARAM;
+                return error;
+            }
+
+            if(!loadRequestData.media.entity) {
+                return loadRequestData;
+            }
+            
+            return fetch(config.serverUrl + '/stream/profile/' + config.sessionId + '/' + requestData.media.entity)
+            
+            .then(response => {
                 if (response.ok) {
                     return response.json();
                 } else {
                     return new cast.framework.messages.ErrorData(cast.framework.messages.ErrorType.INVALID_REQUEST);
                 }
+                
             }).then(data => {
                 // AAC
                 if(data.codecs.includes(1000)) {
@@ -189,10 +203,10 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
                     
                 // Set content url and type
                 requestData.media.contentType = data.mimeType;
-                requestData.media.contentUrl = config.serverUrl + '/stream/' + config.sessionId + '/' + requestData.media.contentId;
+                requestData.media.contentUrl = config.serverUrl + '/stream/' + config.sessionId + '/' + requestData.media.entity;
                     
                 // Set next content id
-                config.nextContentId = requestData.media.contentId;
+                config.nextContentId = requestData.media.entity;
                     
                 return requestData;
             }).catch(error => {
