@@ -58,7 +58,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
          */
         const clientProfile = {
             client: 3,
-            format: 19,
+            format: 9,
             formats: [1,6,9,10,11,12,15,17,18],
             codecs: [],
             mchCodecs: [],
@@ -89,14 +89,14 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
             }
             
             // HEVC
-            if(context.canDisplayType('video/mp4', 'hev1.1.2.L150')) {
-                clientProfile.codecs.push(30);
-            }
+            //if(context.canDisplayType('video/mp4', 'hev1.1.2.L150')) {
+            //    clientProfile.codecs.push(30);
+            //}
             
             // HDR
-            if(context.canDisplayType('video/mp4', 'hev1.2.6.L150')) {
-                clientProfile.codecs.push(31,32);
-            }
+            //if(context.canDisplayType('video/mp4', 'hev1.2.6.L150')) {
+            //    clientProfile.codecs.push(31,32);
+            //}
             
             // High definition audio
             if(deviceCapabilities && deviceCapabilities[cast.framework.system.DeviceCapabilities.HI_RES_AUDIO_SUPPORTED]) {
@@ -199,7 +199,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
                 }
                 
                 // Video
-                requestData.media.hlsVideoSegmentFormat = cast.framework.messages.HlsVideoSegmentFormat.FMP4;
+                requestData.media.hlsVideoSegmentFormat = cast.framework.messages.HlsVideoSegmentFormat.MPEG2_TS;
                     
                 // Set content url and type
                 requestData.media.contentType = data.mimeType;
