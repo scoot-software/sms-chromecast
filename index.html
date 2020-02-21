@@ -89,14 +89,14 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
             }
             
             // HEVC
-            //if(context.canDisplayType('video/mp4', 'hev1.1.2.L150')) {
-            //    clientProfile.codecs.push(30);
-            //}
+            if(context.canDisplayType('video/mp4', 'hev1.1.2.L150')) {
+                clientProfile.codecs.push(30);
+            }
             
             // HDR
-            //if(context.canDisplayType('video/mp4', 'hev1.2.6.L150')) {
-            //    clientProfile.codecs.push(31,32);
-            //}
+            if(context.canDisplayType('video/mp4', 'hev1.2.6.L150')) {
+                clientProfile.codecs.push(31,32);
+            }
             
             // High definition audio
             if(deviceCapabilities && deviceCapabilities[cast.framework.system.DeviceCapabilities.HI_RES_AUDIO_SUPPORTED]) {
@@ -109,9 +109,9 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
             }
             
             // E-AC-3
-            //if(context.canDisplayType('audio/mp4; codecs="mp4a.a6"')) {
-            //    clientProfile.mchCodecs.push(1002);
-            //}
+            if(context.canDisplayType('audio/mp4; codecs="mp4a.a6"')) {
+                clientProfile.mchCodecs.push(1002);
+            }
         });
         
         /**
@@ -178,26 +178,6 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
                 }
                 
             }).then(data => {
-                // AAC
-                //if(data.codecs.includes(1000)) {
-                //    requestData.media.hlsSegmentFormat = cast.framework.messages.HlsSegmentFormat.AAC;
-                //}
-                    
-                // MP3
-                //if(data.codecs.includes(1007)) {
-                //    requestData.media.hlsSegmentFormat = cast.framework.messages.HlsSegmentFormat.MP3;
-                //}
-                    
-                // AC3
-                //if(data.codecs.includes(1001)) {
-                //    requestData.media.hlsSegmentFormat = cast.framework.messages.HlsSegmentFormat.AC3;
-                //}
-                    
-                // E-AC-3
-                //if(data.codecs.includes(1002)) {
-                //    requestData.media.hlsSegmentFormat = cast.framework.messages.HlsSegmentFormat.E_AC3;
-                //}
-                
                 // Video
                 requestData.media.hlsVideoSegmentFormat = cast.framework.messages.HlsVideoSegmentFormat.FMP4;
                 
