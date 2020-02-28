@@ -58,7 +58,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
          */
         const clientProfile = {
             client: 3,
-            format: 19,
+            format: 21,
             formats: [1,6,9,10,11,12,15,17,18],
             codecs: [],
             mchCodecs: [],
@@ -179,10 +179,10 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
                 
             }).then(data => {
                 // Video
-                requestData.media.hlsVideoSegmentFormat = cast.framework.messages.HlsVideoSegmentFormat.FMP4;
+                //requestData.media.hlsVideoSegmentFormat = cast.framework.messages.HlsVideoSegmentFormat.FMP4;
                 
                 // Audio
-                requestData.media.hlsSegmentFormat = cast.framework.messages.HlsSegmentFormat.FMP4;
+                //requestData.media.hlsSegmentFormat = cast.framework.messages.HlsSegmentFormat.FMP4;
                     
                 // Set content url and type
                 requestData.media.contentType = data.mimeType;
