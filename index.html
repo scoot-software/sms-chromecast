@@ -178,12 +178,6 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
                 }
                 
             }).then(data => {
-                // Video
-                //requestData.media.hlsVideoSegmentFormat = cast.framework.messages.HlsVideoSegmentFormat.FMP4;
-                
-                // Audio
-                //requestData.media.hlsSegmentFormat = cast.framework.messages.HlsSegmentFormat.FMP4;
-                    
                 // Set content url and type
                 requestData.media.contentType = data.mimeType;
                 requestData.media.contentUrl = config.serverUrl + '/stream/' + config.sessionId + '/' + requestData.media.entity;
