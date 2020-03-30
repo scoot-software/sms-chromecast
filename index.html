@@ -104,14 +104,14 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
             }
             
             // AC-3
-            //if(context.canDisplayType('audio/mp4; codecs="mp4a.a5"')) {
-            //    clientProfile.mchCodecs.push(1000);
-            //}
+            if(context.canDisplayType('audio/mp4; codecs="mp4a.a5"')) {
+                clientProfile.mchCodecs.push(1000);
+            }
             
             // E-AC-3
-            //if(context.canDisplayType('audio/mp4; codecs="mp4a.a6"')) {
-            //    clientProfile.mchCodecs.push(1002);
-            //}
+            if(context.canDisplayType('audio/mp4; codecs="mp4a.a6"')) {
+                clientProfile.mchCodecs.push(1002);
+            }
         });
         
         /**
